@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Gudang Bekasi — Portee Goods</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0d0f14;--surface:#161922;--surface2:#1e2330;--border:rgba(255,255,255,0.07);--text:#f0f2f8;--muted:#7a8099;--accent:#4f9cf9;--accent2:#38e8b5;--accent3:#f97c4f;--accent4:#c97cf9;--yellow:#f9d74f;--red:#f95f5f}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+  .logo{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+  header h1{font-size:14px;font-weight:600}
+  header p{font-size:11px;color:var(--muted);margin-top:1px}
+  .hbadge{margin-left:auto;background:rgba(79,156,249,0.12);border:1px solid rgba(79,156,249,0.3);color:var(--accent);font-size:11px;font-family:'Space Mono',monospace;padding:4px 12px;border-radius:20px;white-space:nowrap}
+  .tabs{display:flex;gap:2px;padding:16px 28px 0;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:8px 14px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;border-radius:6px 6px 0 0}
+  .tab:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  main{padding:22px 28px;max-width:1280px}
+  .section{display:none}.section.active{display:block}
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:18px}
+  .mc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;position:relative;overflow:hidden}
+  .mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--accent))}
+  .mc .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-family:'Space Mono',monospace;margin-bottom:5px}
+  .mc .val{font-size:20px;font-weight:600;letter-spacing:-.5px}
+  .mc .sub{font-size:10px;color:var(--muted);margin-top:3px}
+  .cc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+  .cc h2{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-family:'Space Mono',monospace;margin-bottom:14px}
+  .cw{position:relative;width:100%}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+  .tc{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px}
+  .tc h2{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-family:'Space Mono',monospace;padding:16px 18px 12px;border-bottom:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  thead th{padding:8px 14px;text-align:left;font-size:10px;color:var(--muted);background:rgba(255,255,255,0.02);font-family:'Space Mono',monospace;letter-spacing:.5px}
+  tbody tr{border-top:1px solid var(--border);transition:background .15s}
+  tbody tr:hover{background:rgba(255,255,255,0.03)}
+  tbody td{padding:8px 14px}
+  .badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
+  .bb{background:rgba(79,156,249,.15);color:#81bfff}
+  .bg{background:rgba(56,232,181,.15);color:#5ef5c8}
+  .bo{background:rgba(249,124,79,.15);color:#ffaa85}
+  .bp{background:rgba(201,124,249,.15);color:#e0a8ff}
+  .br{background:rgba(249,95,95,.15);color:#ff9595}
+  .by{background:rgba(249,215,79,.15);color:#ffe07a}
+  .bw{background:rgba(255,255,255,.08);color:#ccd0e0}
+  .lgnd{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:11px;color:var(--muted)}
+  .lgnd span{display:flex;align-items:center;gap:4px}
+  .ld{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+  .bwrap{margin-bottom:9px}
+  .blabel{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+  .btrack{background:var(--surface2);border-radius:3px;height:6px;overflow:hidden}
+  .bfill{height:6px;border-radius:3px}
+  .rank{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-right:8px;min-width:22px}
+  .ret-tag{background:rgba(249,95,95,.1);border:1px solid rgba(249,95,95,.25);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+  .ret-tag .rt{font-size:10px;color:var(--red);font-family:'Space Mono',monospace;margin-bottom:4px}
+  .ins{border-radius:10px;padding:12px 14px}
+  .ins.b{background:rgba(79,156,249,.07);border:1px solid rgba(79,156,249,.15)}
+  .ins.g{background:rgba(56,232,181,.07);border:1px solid rgba(56,232,181,.15)}
+  .ins.o{background:rgba(249,124,79,.07);border:1px solid rgba(249,124,79,.15)}
+  .ins.p{background:rgba(201,124,249,.07);border:1px solid rgba(201,124,249,.15)}
+  .ins .it{font-size:10px;font-family:'Space Mono',monospace;margin-bottom:5px}
+  .ins.b .it{color:var(--accent)}.ins.g .it{color:var(--accent2)}.ins.o .it{color:var(--accent3)}.ins.p .it{color:var(--accent4)}
+  .ins p{font-size:12px;line-height:1.6;color:var(--text)}
+  .sz-pill{display:inline-block;background:var(--surface2);border-radius:6px;padding:2px 7px;font-size:10px;font-family:'Space Mono',monospace;margin:2px;color:var(--muted)}
+  .sz-pill.hot{background:rgba(56,232,181,.15);color:#5ef5c8}
+  footer{text-align:center;padding:20px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);margin-top:6px;font-family:'Space Mono',monospace}
+  @media(max-width:700px){.two,.three{grid-template-columns:1fr}main{padding:12px}header{padding:12px}header h1{font-size:12px}.tabs{padding:12px 12px 0}}
+  ::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PG</div>
+  <div>
+    <h1>Gudang Peep Bekasi — Portee Goods</h1>
+    <p>Dashboard Lengkap · Pesanan & Analisis Artikel · Jan–Apr 2026</p>
+  </div>
+  <div class="hbadge">317 PESANAN · 328 ITEM</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('overview',this)">Ringkasan</button>
+  <button class="tab" onclick="sw('trend',this)">Tren Harian</button>
+  <button class="tab" onclick="sw('platform',this)">Platform & Kurir</button>
+  <button class="tab" onclick="sw('produk',this)">⭐ Analisis Produk</button>
+  <button class="tab" onclick="sw('ukuran',this)">Ukuran Terlaris</button>
+  <button class="tab" onclick="sw('kota',this)">Kota Tujuan</button>
+  <button class="tab" onclick="sw('finansial',this)">Finansial</button>
+  <button class="tab" onclick="sw('status',this)">Status & Insights</button>
+</div>
+
+<main>
+
+<!-- OVERVIEW -->
+<div id="tab-overview" class="section active">
+  <div class="mgrid">
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">Total Pesanan</div><div class="val">317</div><div class="sub">Jan 19 – Apr 7, 2026</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">Total Item Terjual</div><div class="val">328</div><div class="sub">Beberapa order multi-item</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Total GMV</div><div class="val">Rp 208 jt</div><div class="sub">Harga sebelum biaya platform</div></div>
+    <div class="mc" style="--ac:var(--accent4)"><div class="lbl">Revenue (Amount)</div><div class="val">Rp 127 jt</div><div class="sub">Setelah diskon, sebelum biaya</div></div>
+    <div class="mc" style="--ac:var(--yellow)"><div class="lbl">Produk Terlaris</div><div class="val">Derby Black</div><div class="sub">62 item terjual</div></div>
+    <div class="mc" style="--ac:var(--red)"><div class="lbl">Item Returned</div><div class="val">6 item</div><div class="sub">1,8% dari total item</div></div>
+  </div>
+  <div class="cc">
+    <h2>Tren Pesanan Harian — Jan–Apr 2026</h2>
+    <div class="cw" style="height:220px"><canvas id="c-trend-ov"></canvas></div>
+  </div>
+  <div class="two">
+    <div class="cc" style="margin-bottom:0">
+      <h2>Platform</h2>
+      <div class="lgnd">
+        <span><span class="ld" style="background:#4f9cf9"></span>Shopee 201 (63%)</span>
+        <span><span class="ld" style="background:#38e8b5"></span>Tokopedia 70 (22%)</span>
+        <span><span class="ld" style="background:#c97cf9"></span>TikTok 46 (15%)</span>
+      </div>
+      <div class="cw" style="height:180px"><canvas id="c-plat-ov"></canvas></div>
+    </div>
+    <div class="cc" style="margin-bottom:0">
+      <h2>Kategori Produk (by Item)</h2>
+      <div class="lgnd">
+        <span><span class="ld" style="background:#38e8b5"></span>Sandal 165</span>
+        <span><span class="ld" style="background:#4f9cf9"></span>Derby/Oxford 73</span>
+        <span><span class="ld" style="background:#c97cf9"></span>Loafers 43</span>
+        <span><span class="ld" style="background:#f97c4f"></span>Lainnya 47</span>
+      </div>
+      <div class="cw" style="height:180px"><canvas id="c-cat-ov"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- TREN HARIAN -->
+<div id="tab-trend" class="section">
+  <div class="mgrid">
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">Januari</div><div class="val">80</div><div class="sub">25% dari total</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">Februari</div><div class="val">136</div><div class="sub">43% — bulan puncak</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Maret</div><div class="val">30</div><div class="sub">9% dari total</div></div>
+    <div class="mc" style="--ac:var(--accent4)"><div class="lbl">April (s.d. 7 Apr)</div><div class="val">71</div><div class="sub">10,1 pesanan/hari</div></div>
+    <div class="mc" style="--ac:var(--yellow)"><div class="lbl">Hari Tersibuk</div><div class="val">2 Feb</div><div class="sub">28 pesanan dalam 1 hari</div></div>
+    <div class="mc" style="--ac:var(--red)"><div class="lbl">Avg Harian</div><div class="val">5,9</div><div class="sub">Per hari ada transaksi</div></div>
+  </div>
+  <div class="cc"><h2>Januari 2026 — 80 Pesanan</h2><div class="cw" style="height:180px"><canvas id="c-jan"></canvas></div></div>
+  <div class="cc"><h2>Februari 2026 — 136 Pesanan (Puncak)</h2><div class="cw" style="height:180px"><canvas id="c-feb"></canvas></div></div>
+  <div class="cc"><h2>Maret 2026 — 30 Pesanan</h2><div class="cw" style="height:180px"><canvas id="c-mar"></canvas></div></div>
+  <div class="cc"><h2>April 2026 — 71 Pesanan (s.d. 7 Apr)</h2><div class="cw" style="height:180px"><canvas id="c-apr"></canvas></div></div>
+</div>
+
+<!-- PLATFORM & KURIR -->
+<div id="tab-platform" class="section">
+  <div class="two">
+    <div class="cc" style="margin-bottom:0"><h2>Pesanan per Platform</h2><div class="cw" style="height:220px"><canvas id="c-plat-bar"></canvas></div></div>
+    <div class="cc" style="margin-bottom:0"><h2>Kurir Digunakan</h2><div class="cw" style="height:220px"><canvas id="c-kurir"></canvas></div></div>
+  </div>
+  <div class="tc" style="margin-top:12px">
+    <h2>Performa per Platform</h2>
+    <table>
+      <thead><tr><th>Platform</th><th>Pesanan</th><th>%</th><th>Kurir Utama</th><th>Avg Amount/Order</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge bo">Shopee</span></td><td>201</td><td>63,4%</td><td>SPX Instant</td><td>Rp ~315 rb</td></tr>
+        <tr><td><span class="badge bg">Tokopedia</span></td><td>70</td><td>22,1%</td><td>Paxel / Gojek</td><td>Rp ~386 rb</td></tr>
+        <tr><td><span class="badge bp">TikTok Shop</span></td><td>46</td><td>14,5%</td><td>Gojek Instant</td><td>Rp ~380 rb</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ANALISIS PRODUK -->
+<div id="tab-produk" class="section">
+  <div class="mgrid">
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">#1 Terlaris</div><div class="val">Derby Black</div><div class="sub">62 item — Original Derby Black</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">#2 Terlaris</div><div class="val">Alpaca Onyx</div><div class="sub">30 item — Alpaca Sandal Onyx</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">#2 Terlaris</div><div class="val">Loafers Blk</div><div class="sub">30 item — Original Loafers Black</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Revenue Tertinggi</div><div class="val">Derby Black</div><div class="sub">Rp 23,4 jt dari 62 item</div></div>
+    <div class="mc" style="--ac:var(--yellow)"><div class="lbl">Kategori Terlaris</div><div class="val">Sandal</div><div class="sub">165 item (50% dari total)</div></div>
+    <div class="mc" style="--ac:var(--red)"><div class="lbl">Item Returned</div><div class="val">6 item</div><div class="sub">5 produk berbeda</div></div>
+  </div>
+
+  <div class="cc">
+    <h2>Top 15 Produk Terlaris (Jumlah Item Terjual)</h2>
+    <div class="cw" style="height:400px"><canvas id="c-prod-bar"></canvas></div>
+  </div>
+
+  <div class="two">
+    <div class="cc" style="margin-bottom:0">
+      <h2>Revenue per Produk (Top 10)</h2>
+      <div class="cw" style="height:300px"><canvas id="c-prod-rev"></canvas></div>
+    </div>
+    <div class="cc" style="margin-bottom:0">
+      <h2>Distribusi Kategori Produk</h2>
+      <div class="lgnd">
+        <span><span class="ld" style="background:#38e8b5"></span>Sandal 165</span>
+        <span><span class="ld" style="background:#4f9cf9"></span>Derby/Oxford 73</span>
+        <span><span class="ld" style="background:#c97cf9"></span>Loafers 43</span>
+        <span><span class="ld" style="background:#f97c4f"></span>Boots 10</span>
+        <span><span class="ld" style="background:#f9d74f"></span>Sandal Kids 10</span>
+        <span><span class="ld" style="background:#f95f5f"></span>Lainnya 27</span>
+      </div>
+      <div class="cw" style="height:260px"><canvas id="c-cat-donut"></canvas></div>
+    </div>
+  </div>
+
+  <div class="tc">
+    <h2>Detail Lengkap Top 20 Produk</h2>
+    <table>
+      <thead><tr><th>#</th><th>Nama Produk</th><th>Kategori</th><th>Terjual</th><th>Revenue</th><th>Avg/item</th><th>Return</th><th>Ukuran Terpopuler</th></tr></thead>
+      <tbody id="prod-table"></tbody>
+    </table>
+  </div>
+
+  <div class="tc">
+    <h2>Produk yang Di-Return (Detail)</h2>
+    <div style="padding:14px 16px">
+      <div class="ret-tag"><div class="rt">ALPACA SANDAL ONYX · 2x RETURNED</div><div style="font-size:12px">SKU: PSD0661BLK · 13 Feb 2026 · Rosyid/Rosyidah · Shopee (SPX Instant) · Rp 366.054 × 2</div><div style="font-size:11px;color:var(--muted);margin-top:4px">⚠️ Produk terlaris ke-2, tapi juga punya return tertinggi. Cek konsistensi sizing sz39 dan sz40.</div></div>
+      <div class="ret-tag"><div class="rt">ORIGINAL DERBY BOOTS LEATHER · 1x RETURNED</div><div style="font-size:12px">SKU: SLH0102BLK · 20 Feb 2026 · K***i · Tokopedia (Anteraja) · Rp 692.099</div><div style="font-size:11px;color:var(--muted);margin-top:4px">⚠️ Produk premium. Return terjadi di pengiriman Anteraja — cek kondisi packaging untuk boots.</div></div>
+      <div class="ret-tag"><div class="rt">ORIGINAL DERBY BLACK · 1x RETURNED</div><div style="font-size:12px">SKU: SSY0102BLK · 16 Feb 2026 · Alfan · TikTok Shop (Gojek Instant) · Rp 361.599</div><div style="font-size:11px;color:var(--muted);margin-top:4px">⚠️ Produk terlaris #1. Return hanya 1 dari 62 item (1,6%) — masih sangat aman.</div></div>
+      <div class="ret-tag"><div class="rt">LOOM SANDAL BLACK · 1x RETURNED</div><div style="font-size:12px">SKU: PSD0648BLK · 3 Apr 2026 · P*** K***t · Tokopedia (Paxel) · Rp 213.999</div><div style="font-size:11px;color:var(--muted);margin-top:4px">⚠️ Item sz45 — periksa apakah ada masalah fitting ukuran besar.</div></div>
+      <div class="ret-tag"><div class="rt">LOOM SANDAL RAINBOW BLACK WOMEN · 1x RETURNED</div><div style="font-size:12px">SKU: PSD0648RBB · 4 Apr 2026 · lta Bunda Khansa · Shopee (SPX Instant) · Rp 315.665</div><div style="font-size:11px;color:var(--muted);margin-top:4px">⚠️ Ukuran sz36 (terkecil) — kemungkinan mismatch ekspektasi produk wanita.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- UKURAN -->
+<div id="tab-ukuran" class="section">
+  <div class="cc">
+    <h2>Ukuran Terlaris — Original Derby Black (Produk #1, 62 Item)</h2>
+    <div style="margin-top:4px">
+      <div class="bwrap"><div class="blabel"><span>Size 42</span><span style="color:var(--accent);font-weight:600">14 item</span></div><div class="btrack"><div class="bfill" style="width:100%;background:var(--accent)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 41</span><span style="color:var(--accent2);font-weight:600">11 item</span></div><div class="btrack"><div class="bfill" style="width:79%;background:var(--accent2)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 43</span><span style="color:var(--accent3);font-weight:600">11 item</span></div><div class="btrack"><div class="bfill" style="width:79%;background:var(--accent3)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 40</span><span style="color:var(--accent4);font-weight:600">8 item</span></div><div class="btrack"><div class="bfill" style="width:57%;background:var(--accent4)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 45</span><span style="color:var(--yellow);font-weight:600">7 item</span></div><div class="btrack"><div class="bfill" style="width:50%;background:var(--yellow)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 44</span><span style="color:var(--accent);font-weight:600">5 item</span></div><div class="btrack"><div class="bfill" style="width:36%;background:var(--accent)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 39</span><span style="color:var(--accent2);font-weight:600">4 item</span></div><div class="btrack"><div class="bfill" style="width:29%;background:var(--accent2)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 42 (Women)</span><span style="color:var(--accent3);font-weight:600">2 item</span></div><div class="btrack"><div class="bfill" style="width:14%;background:var(--accent3)"></div></div></div>
+    </div>
+    <div style="margin-top:14px;padding:10px 12px;background:rgba(56,232,181,.07);border:1px solid rgba(56,232,181,.15);border-radius:8px;font-size:12px;color:var(--text)">
+      💡 <strong>Rekomendasi stok Derby Black:</strong> Prioritaskan sz41–43 (paling sering habis). Sz42 jadi andalan utama — pastikan selalu ready stock minimal 5–7 pcs.
+    </div>
+  </div>
+
+  <div class="cc">
+    <h2>Ukuran Terlaris — Alpaca Sandal Onyx (30 Item)</h2>
+    <div style="margin-top:4px">
+      <div class="bwrap"><div class="blabel"><span>Size 42</span><span style="color:var(--accent);font-weight:600">8 item</span></div><div class="btrack"><div class="bfill" style="width:100%;background:var(--accent)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 39 & 43</span><span style="color:var(--accent2);font-weight:600">4 item masing-masing</span></div><div class="btrack"><div class="bfill" style="width:50%;background:var(--accent2)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 40, 41, 45, 46</span><span style="color:var(--accent3);font-weight:600">2–3 item</span></div><div class="btrack"><div class="bfill" style="width:38%;background:var(--accent3)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 36 (Women/kecil)</span><span style="color:var(--accent4);font-weight:600">3 item</span></div><div class="btrack"><div class="bfill" style="width:38%;background:var(--accent4)"></div></div></div>
+    </div>
+    <div style="margin-top:14px;padding:10px 12px;background:rgba(249,95,95,.07);border:1px solid rgba(249,95,95,.15);border-radius:8px;font-size:12px;color:var(--text)">
+      ⚠️ <strong>Perhatian:</strong> 2 return dari produk ini terjadi di size 39 & 40 (Feb 2026). Cek apakah ada problem fitting di ukuran tersebut.
+    </div>
+  </div>
+
+  <div class="cc">
+    <h2>Ukuran Terlaris — Original Loafers Black (30 Item)</h2>
+    <div style="margin-top:4px">
+      <div class="bwrap"><div class="blabel"><span>Size 43</span><span style="color:var(--accent);font-weight:600">10 item</span></div><div class="btrack"><div class="bfill" style="width:100%;background:var(--accent)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 42</span><span style="color:var(--accent2);font-weight:600">6 item</span></div><div class="btrack"><div class="bfill" style="width:60%;background:var(--accent2)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 44</span><span style="color:var(--accent3);font-weight:600">4 item</span></div><div class="btrack"><div class="bfill" style="width:40%;background:var(--accent3)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 40, 41, 45</span><span style="color:var(--accent4);font-weight:600">2–3 item</span></div><div class="btrack"><div class="bfill" style="width:30%;background:var(--accent4)"></div></div></div>
+    </div>
+    <div style="margin-top:14px;padding:10px 12px;background:rgba(56,232,181,.07);border:1px solid rgba(56,232,181,.15);border-radius:8px;font-size:12px;color:var(--text)">
+      💡 Loafers didominasi sz43 — berbeda dari Derby yang sz42 dominan. Segment pembeli cenderung ukuran lebih besar.
+    </div>
+  </div>
+
+  <div class="cc">
+    <h2>Ukuran Terlaris — Loom Sandal Rainbow White Women (19 Item)</h2>
+    <div style="margin-top:4px">
+      <div class="bwrap"><div class="blabel"><span>Size 40</span><span style="color:var(--accent);font-weight:600">7 item</span></div><div class="btrack"><div class="bfill" style="width:100%;background:var(--accent)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 38</span><span style="color:var(--accent2);font-weight:600">6 item</span></div><div class="btrack"><div class="bfill" style="width:86%;background:var(--accent2)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Size 36, 37, 39</span><span style="color:var(--accent3);font-weight:600">2 item masing-masing</span></div><div class="btrack"><div class="bfill" style="width:29%;background:var(--accent3)"></div></div></div>
+    </div>
+    <div style="margin-top:14px;padding:10px 12px;background:rgba(56,232,181,.07);border:1px solid rgba(56,232,181,.15);border-radius:8px;font-size:12px;color:var(--text)">
+      💡 Produk sandal wanita — size 38–40 adalah sweet spot. Pastikan selalu ada stok di range ini.
+    </div>
+  </div>
+
+  <div class="tc">
+    <h2>Rekomendasi Prioritas Stok</h2>
+    <table>
+      <thead><tr><th>Produk</th><th>Ukuran Wajib Ready</th><th>Ukuran Cadangan</th><th>Catatan</th></tr></thead>
+      <tbody>
+        <tr><td>Original Derby Black</td><td><span class="sz-pill hot">41</span><span class="sz-pill hot">42</span><span class="sz-pill hot">43</span></td><td><span class="sz-pill">40</span><span class="sz-pill">44</span><span class="sz-pill">45</span></td><td>Produk #1 — jangan sampai kosong</td></tr>
+        <tr><td>Alpaca Sandal Onyx</td><td><span class="sz-pill hot">42</span><span class="sz-pill hot">39</span><span class="sz-pill hot">43</span></td><td><span class="sz-pill">36</span><span class="sz-pill">40</span><span class="sz-pill">45</span></td><td>Cek fitting sz39-40 (ada return)</td></tr>
+        <tr><td>Original Loafers Black</td><td><span class="sz-pill hot">43</span><span class="sz-pill hot">42</span><span class="sz-pill hot">44</span></td><td><span class="sz-pill">40</span><span class="sz-pill">41</span><span class="sz-pill">45</span></td><td>Size besar dominan</td></tr>
+        <tr><td>Tokyo Sandal Black</td><td><span class="sz-pill hot">42</span><span class="sz-pill hot">43</span><span class="sz-pill hot">39</span></td><td><span class="sz-pill">37</span><span class="sz-pill">40</span><span class="sz-pill">41</span></td><td>Merata di berbagai size</td></tr>
+        <tr><td>Loom Sandal RBW Women</td><td><span class="sz-pill hot">38</span><span class="sz-pill hot">40</span></td><td><span class="sz-pill">36</span><span class="sz-pill">37</span><span class="sz-pill">39</span></td><td>Produk wanita sz kecil dominan</td></tr>
+        <tr><td>Kavana Sandal Black</td><td><span class="sz-pill hot">43</span><span class="sz-pill hot">42</span></td><td><span class="sz-pill">39</span><span class="sz-pill">44</span></td><td>Volume sedang, tapi avg harga tinggi</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- KOTA -->
+<div id="tab-kota" class="section">
+  <div class="mgrid">
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">No. 1</div><div class="val">Jakarta Sel.</div><div class="sub">~48 pesanan</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">No. 2</div><div class="val">Jakarta Tim.</div><div class="sub">~46 pesanan</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">No. 3</div><div class="val">Bekasi</div><div class="sub">~45 pesanan</div></div>
+    <div class="mc" style="--ac:var(--accent4)"><div class="lbl">No. 4</div><div class="val">Jakarta Pus.</div><div class="sub">~35 pesanan</div></div>
+    <div class="mc" style="--ac:var(--yellow)"><div class="lbl">No. 5</div><div class="val">Depok</div><div class="sub">~22 pesanan</div></div>
+    <div class="mc" style="--ac:var(--red)"><div class="lbl">Coverage</div><div class="val">Jabodetabek</div><div class="sub">95%+ dari semua order</div></div>
+  </div>
+  <div class="cc">
+    <h2>Top 10 Kota Tujuan</h2>
+    <div style="margin-top:4px">
+      <div class="bwrap"><div class="blabel"><span>Jakarta Selatan</span><span style="color:var(--accent);font-weight:600">48</span></div><div class="btrack"><div class="bfill" style="width:100%;background:var(--accent)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Jakarta Timur</span><span style="color:var(--accent2);font-weight:600">46</span></div><div class="btrack"><div class="bfill" style="width:96%;background:var(--accent2)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Bekasi (Kota + Kab)</span><span style="color:var(--accent3);font-weight:600">45</span></div><div class="btrack"><div class="bfill" style="width:94%;background:var(--accent3)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Jakarta Pusat</span><span style="color:var(--accent4);font-weight:600">35</span></div><div class="btrack"><div class="bfill" style="width:73%;background:var(--accent4)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Depok</span><span style="color:var(--yellow);font-weight:600">22</span></div><div class="btrack"><div class="bfill" style="width:46%;background:var(--yellow)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Tangerang Selatan</span><span style="color:var(--accent);font-weight:600">18</span></div><div class="btrack"><div class="bfill" style="width:38%;background:var(--accent)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Tangerang Kota</span><span style="color:var(--accent2);font-weight:600">14</span></div><div class="btrack"><div class="bfill" style="width:29%;background:var(--accent2)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Jakarta Utara</span><span style="color:var(--accent3);font-weight:600">13</span></div><div class="btrack"><div class="bfill" style="width:27%;background:var(--accent3)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Bogor (Kota + Kab)</span><span style="color:var(--accent4);font-weight:600">11</span></div><div class="btrack"><div class="bfill" style="width:23%;background:var(--accent4)"></div></div></div>
+      <div class="bwrap"><div class="blabel"><span>Jakarta Barat</span><span style="color:var(--yellow);font-weight:600">8</span></div><div class="btrack"><div class="bfill" style="width:17%;background:var(--yellow)"></div></div></div>
+    </div>
+  </div>
+  <div class="cc">
+    <h2>Distribusi Provinsi</h2>
+    <div class="lgnd"><span><span class="ld" style="background:#4f9cf9"></span>DKI Jakarta 59%</span><span><span class="ld" style="background:#38e8b5"></span>Jawa Barat 31%</span><span><span class="ld" style="background:#f97c4f"></span>Banten 10%</span></div>
+    <div class="cw" style="height:180px"><canvas id="c-prov"></canvas></div>
+  </div>
+</div>
+
+<!-- FINANSIAL -->
+<div id="tab-finansial" class="section">
+  <div class="mgrid">
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">GMV Total</div><div class="val">Rp 208 jt</div><div class="sub">Nilai harga produk asli</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">Revenue (Amount)</div><div class="val">Rp 127 jt</div><div class="sub">Setelah diskon, sblm biaya</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Grand Total Diterima</div><div class="val">Rp 109 jt</div><div class="sub">Setelah semua potongan</div></div>
+    <div class="mc" style="--ac:var(--red)"><div class="lbl">Total Dipotong</div><div class="val">~Rp 99 jt</div><div class="sub">Diskon + biaya platform</div></div>
+    <div class="mc" style="--ac:var(--accent4)"><div class="lbl">GMV Feb</div><div class="val">Rp 90 jt</div><div class="sub">43% dari total</div></div>
+    <div class="mc" style="--ac:var(--yellow)"><div class="lbl">Rasio Diterima/GMV</div><div class="val">52,4%</div><div class="sub">Grand Total / GMV</div></div>
+  </div>
+  <div class="cc">
+    <h2>GMV vs Grand Total per Bulan</h2>
+    <div class="lgnd"><span><span class="ld" style="background:rgba(79,156,249,0.4)"></span>GMV</span><span><span class="ld" style="background:#4f9cf9"></span>Grand Total Diterima</span></div>
+    <div class="cw" style="height:210px"><canvas id="c-gmv"></canvas></div>
+  </div>
+  <div class="two">
+    <div class="cc" style="margin-bottom:0"><h2>Distribusi Grand Total per Order</h2><div class="cw" style="height:200px"><canvas id="c-dist"></canvas></div></div>
+    <div class="cc" style="margin-bottom:0"><h2>Revenue per Kategori Produk</h2><div class="cw" style="height:200px"><canvas id="c-cat-rev"></canvas></div></div>
+  </div>
+</div>
+
+<!-- STATUS & INSIGHTS -->
+<div id="tab-status" class="section">
+  <div class="mgrid">
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">Completed</div><div class="val">263</div><div class="sub">82,9%</div></div>
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">Shipped</div><div class="val">46</div><div class="sub">14,5%</div></div>
+    <div class="mc" style="--ac:var(--yellow)"><div class="lbl">Processing</div><div class="val">3</div><div class="sub">0,9%</div></div>
+    <div class="mc" style="--ac:var(--red)"><div class="lbl">Returned</div><div class="val">5</div><div class="sub">1,6% pesanan</div></div>
+  </div>
+  <div class="two">
+    <div class="cc" style="margin-bottom:0"><h2>Status Pesanan</h2><div class="cw" style="height:210px"><canvas id="c-status"></canvas></div></div>
+    <div class="cc" style="margin-bottom:0">
+      <h2>5 Pesanan Returned</h2>
+      <div style="margin-top:2px">
+        <div class="ret-tag"><div class="rt">INV-000207925 · Shopee · 13 Feb</div><div style="font-size:12px">Rosyid · Alpaca Sandal Onyx ×2 · SPX Prioritas · Rp 732.108</div></div>
+        <div class="ret-tag"><div class="rt">INV-000208902 · Tokopedia · 20 Feb</div><div style="font-size:12px">K***i · Derby Boots Leather · Anteraja · Rp 692.099</div></div>
+        <div class="ret-tag"><div class="rt">INV-000208280 · TikTok · 16 Feb</div><div style="font-size:12px">Alfan · Original Derby Black · Gojek Instant · Rp 361.599</div></div>
+        <div class="ret-tag"><div class="rt">INV-000220499 · Tokopedia · 3 Apr</div><div style="font-size:12px">P*** K***t · Loom Sandal Black · Paxel · Rp 213.999</div></div>
+        <div class="ret-tag"><div class="rt">INV-000220988 · Shopee · 4 Apr</div><div style="font-size:12px">lta Bunda Khansa · Loom Sandal RBB Women sz36 · Rp 315.665</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="cc" style="margin-top:2px">
+    <h2>Rekomendasi Bisnis Berdasarkan Data</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+      <div class="ins b"><div class="it">FOKUS STOK DERBY BLACK</div><p>62 item terjual = 19% dari semua item. Ini produk andalan. Pastikan selalu ada stok sz41–43. Sekali kosong, revenue langsung drop.</p></div>
+      <div class="ins g"><div class="it">SANDAL WANITA SANGAT KUAT</div><p>Rainbow White Women (19 item), Alpaca Women (12 item), Army Green (14 item) — segmen wanita menyumbang 40%+ penjualan sandal. Pertimbangkan tambah SKU wanita.</p></div>
+      <div class="ins o"><div class="it">RETURN TERPUSAT FEBRUARI</div><p>4 dari 5 return di Februari. Kemungkinan ada lonjakan packing error saat peak order (28 pesanan/hari tgl 2 Feb). Tambah QC packing saat volume tinggi.</p></div>
+      <div class="ins p"><div class="it">PRODUK PREMIUM UNDERPENETRATED</div><p>Oxford Knit (Rp 773rb), Loafers Penny (Rp 794rb), Captoe Brogues (Rp 848rb) masing-masing hanya 1–2 terjual. Ada potensi besar jika dipromosikan lebih agresif di Tokopedia/TikTok.</p></div>
+      <div class="ins b"><div class="it">MOMENTUM APRIL LUAR BIASA</div><p>71 pesanan dalam 7 hari = avg 10,1/hari. Jika dipertahankan, April bisa melebihi Februari. Pastikan gudang siap dari sisi stok dan SDM.</p></div>
+      <div class="ins g"><div class="it">AKSESORIS SEBAGAI UPSELL</div><p>Shoe Care (PEQ2199) dan Shoe Wash terjual sebagai bundle. Tingkatkan strategi bundle dengan produk utama untuk naikkan average order value.</p></div>
+    </div>
+  </div>
+</div>
+
+</main>
+<footer>Portee Goods · Gudang Peep Bekasi · 317 Pesanan · 328 Item · Jan–Apr 2026 · Data dihitung dari PDF asli</footer>
+
+<script>
+const GR={color:'rgba(255,255,255,0.04)'}, TX={color:'#7a8099'};
+
+// OVERVIEW TREND
+new Chart(document.getElementById('c-trend-ov'),{type:'line',data:{labels:['19/1','20/1','21/1','22/1','23/1','24/1','25/1','26/1','27/1','28/1','30/1','31/1','2/2','3/2','4/2','5/2','6/2','7/2','8/2','9/2','10/2','11/2','12/2','13/2','14/2','16/2','18/2','19/2','20/2','21/2','23/2','24/2','25/2','26/2','2/3','3/3','4/3','5/3','6/3','9/3','10/3','11/3','12/3','14/3','17/3','18/3','31/3','2/4','3/4','4/4','6/4','7/4'],datasets:[{data:[1,12,8,10,12,5,5,6,9,4,6,2,28,19,3,4,3,3,2,5,7,9,7,2,2,9,4,3,9,1,4,6,3,3,4,2,1,4,3,2,3,3,4,1,1,1,1,16,13,17,18,7],borderColor:'#4f9cf9',backgroundColor:'rgba(79,156,249,0.1)',tension:.4,fill:true,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:18},grid:GR},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+
+// PLATFORM & KATEGORI DONUTS
+new Chart(document.getElementById('c-plat-ov'),{type:'doughnut',data:{labels:['Shopee','Tokopedia','TikTok'],datasets:[{data:[201,70,46],backgroundColor:['#4f9cf9','#38e8b5','#c97cf9'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}});
+new Chart(document.getElementById('c-cat-ov'),{type:'doughnut',data:{labels:['Sandal','Derby/Oxford','Loafers','Boots','Sandal Kids','Lainnya'],datasets:[{data:[165,73,43,10,10,27],backgroundColor:['#38e8b5','#4f9cf9','#c97cf9','#f97c4f','#f9d74f','#7a8099'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
+
+// TREN PER BULAN
+const mOpts=(c)=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:c,font:{size:11}},grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}});
+new Chart(document.getElementById('c-jan'),{type:'bar',data:{labels:['19','20','21','22','23','24','25','26','27','28','30','31'],datasets:[{data:[1,12,8,10,12,5,5,6,9,4,6,2],backgroundColor:'#4f9cf9',borderRadius:4}]},options:mOpts('#4f9cf9')});
+new Chart(document.getElementById('c-feb'),{type:'bar',data:{labels:['2','3','4','5','6','7','8','9','10','11','12','13','14','16','18','19','20','21','23','24','25','26'],datasets:[{data:[28,19,3,4,3,3,2,5,7,9,7,2,2,9,4,3,9,1,4,6,3,3],backgroundColor:'#38e8b5',borderRadius:4}]},options:mOpts('#38e8b5')});
+new Chart(document.getElementById('c-mar'),{type:'bar',data:{labels:['2','3','4','5','6','9','10','11','12','14','17','18','31'],datasets:[{data:[4,2,1,4,3,2,3,3,4,1,1,1,1],backgroundColor:'#f97c4f',borderRadius:4}]},options:mOpts('#f97c4f')});
+new Chart(document.getElementById('c-apr'),{type:'bar',data:{labels:['2','3','4','6','7'],datasets:[{data:[16,13,17,18,7],backgroundColor:'#c97cf9',borderRadius:4}]},options:mOpts('#c97cf9')});
+
+// PLATFORM BAR
+new Chart(document.getElementById('c-plat-bar'),{type:'bar',data:{labels:['Shopee','Tokopedia','TikTok Shop'],datasets:[{data:[201,70,46],backgroundColor:['#4f9cf9','#38e8b5','#c97cf9'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:TX,grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+
+// KURIR
+new Chart(document.getElementById('c-kurir'),{type:'bar',data:{labels:['SPX Instant','Gojek Instant','Paxel Same Day','Grab Instant','Anteraja','GoSend/GrabEx','Lainnya'],datasets:[{data:[140,50,40,30,20,17,20],backgroundColor:'#f9d74f',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:TX,grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}});
+
+// PRODUK TOP BAR
+const prodNames=['Original Derby Black','Original Loafers Black','Alpaca Sandal Onyx','Tokyo Sandal Black','Loom Sandal RBW Women','Loom Sandal Black','Loom Sandal Army Green','Alpaca Sandal Women Onyx','Loom Sandal Olive','Alpaca Sandal Dune','Derby Boots Leather','Kavana Sandal Black','Mono Court All Black','Alpaca Sandal Women Peony','Derby RL Series Black'];
+const prodQty=[62,30,30,19,19,14,14,12,11,10,8,8,6,5,5];
+const prodColors=prodQty.map((v,i)=>i===0?'#38e8b5':i<3?'#4f9cf9':i<7?'#c97cf9':'#f97c4f');
+new Chart(document.getElementById('c-prod-bar'),{type:'bar',data:{labels:prodNames,datasets:[{data:prodQty,backgroundColor:prodColors,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:TX,grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}});
+
+// PRODUK REVENUE
+const revNames=['Original Derby Black','Alpaca Sandal Onyx','Original Loafers Black','Tokyo Sandal Black','Alpaca Sandal Women Onyx','Derby Boots Leather','Alpaca Sandal Dune','Kavana Sandal Black','Loom Sandal RBW Women','Loom Sandal Army Green'];
+const revVals=[23365449,13281579,10906938,7377417,5512721,5765207,4573940,3615154,6085778,4277521];
+new Chart(document.getElementById('c-prod-rev'),{type:'bar',data:{labels:revNames,datasets:[{data:revVals,backgroundColor:'#4f9cf9',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{...TX,callback:v=>'Rp '+(v/1000000).toFixed(1)+'jt'},grid:GR},y:{ticks:{...TX,font:{size:10}},grid:{display:false}}}}});
+
+// KATEGORI DONUT
+new Chart(document.getElementById('c-cat-donut'),{type:'doughnut',data:{labels:['Sandal 165','Derby/Oxford 73','Loafers 43','Boots 10','Sandal Kids 10','Lainnya 27'],datasets:[{data:[165,73,43,10,10,27],backgroundColor:['#38e8b5','#4f9cf9','#c97cf9','#f97c4f','#f9d74f','#7a8099'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7a8099',font:{size:10},padding:10}}},cutout:'58%'}});
+
+// PROVINSI
+new Chart(document.getElementById('c-prov'),{type:'doughnut',data:{labels:['DKI Jakarta 59%','Jawa Barat 31%','Banten 10%'],datasets:[{data:[188,98,31],backgroundColor:['#4f9cf9','#38e8b5','#f97c4f'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7a8099',font:{size:11},padding:12}}},cutout:'60%'}});
+
+// GMV
+new Chart(document.getElementById('c-gmv'),{type:'bar',data:{labels:['Januari','Februari','Maret','April (parsial)'],datasets:[{label:'GMV',data:[54196000,89959000,19097000,44756000],backgroundColor:'rgba(79,156,249,0.35)',borderRadius:3},{label:'Grand Total',data:[28014068,47747424,10609123,22649201],backgroundColor:'#4f9cf9',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7a8099',font:{size:11},padding:12}}},scales:{x:{ticks:TX,grid:{display:false}},y:{beginAtZero:true,ticks:{...TX,callback:v=>'Rp '+Math.round(v/1000000)+'jt'},grid:GR}}}});
+
+// DISTRIBUSI
+new Chart(document.getElementById('c-dist'),{type:'bar',data:{labels:['<200rb','200–300rb','300–400rb','400–500rb','500–600rb','600–700rb','>700rb'],datasets:[{data:[8,42,90,60,50,30,37],backgroundColor:'#c97cf9',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+
+// KATEGORI REVENUE
+new Chart(document.getElementById('c-cat-rev'),{type:'bar',data:{labels:['Sandal','Derby/Oxford','Loafers','Boots','Sneakers','Lainnya'],datasets:[{data:[62223277,27630508,18280643,6620987,2458974,10196775],backgroundColor:['#38e8b5','#4f9cf9','#c97cf9','#f97c4f','#f9d74f','#7a8099'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:{...TX,callback:v=>'Rp '+(v/1000000).toFixed(0)+'jt'},grid:GR}}}});
+
+// STATUS
+new Chart(document.getElementById('c-status'),{type:'bar',data:{labels:['Completed','Shipped','Processing','Returned'],datasets:[{data:[263,46,3,5],backgroundColor:['#38e8b5','#4f9cf9','#f9d74f','#f95f5f'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:TX,grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+
+// PRODUK TABLE
+const prodData=[
+  ['Original Derby Black','Derby/Oxford',62,23365449,1,'sz42(14), sz41(11), sz43(11)'],
+  ['Original Loafers Black','Loafers',30,10906938,0,'sz43(10), sz42(6), sz44(4)'],
+  ['Alpaca Sandal Onyx','Sandal',30,13281579,2,'sz42(8), sz39(4), sz43(4)'],
+  ['Tokyo Sandal Black','Sandal',19,7377417,0,'sz42(4), sz43(4), sz39(4)'],
+  ['Loom Sandal RBW Women','Sandal',19,6085778,0,'sz40(7), sz38(6), sz36(2)'],
+  ['Loom Sandal Black','Sandal',14,3998598,1,'sz45(5), sz46(3), sz44(3)'],
+  ['Loom Sandal Army Green','Sandal',14,4277521,0,'sz40(3), sz39(3), sz41(2)'],
+  ['Alpaca Sandal Women Onyx','Sandal',12,5512721,0,'sz38(7), sz36(5)'],
+  ['Loom Sandal Olive','Sandal',11,3602628,0,'sz45(3), sz41(2), sz44(2)'],
+  ['Alpaca Sandal Dune','Sandal',10,4573940,0,'sz40(5), sz42(4), sz41(1)'],
+  ['Derby Boots Leather','Boots',8,5765207,1,'sz41(3), sz39(2), sz43(1)'],
+  ['Kavana Sandal Black','Sandal',8,3615154,0,'sz43(3), sz42(2), sz44(2)'],
+  ['Mono Court All Black','Sneakers',6,2458974,0,'sz42(3), sz45(1), sz43(1)'],
+  ['Alpaca Sandal Women Peony','Sandal',5,2376132,0,'sz40(4), sz41(1)'],
+  ['Derby RL Series Black','Derby/Oxford',5,1961998,0,'sz42(2), sz43(2), sz40(1)'],
+  ['Loom Sandal RBB Women','Sandal',5,1672098,1,'sz36(4), sz37(1)'],
+  ['Original Derby Black Women','Derby/Oxford',5,1922875,0,'sz39(2), sz38(1), sz40(1)'],
+  ['Tokyo Sandal Black Women','Sandal',4,1417921,0,'sz37(3), sz38(1)'],
+  ['Loom Sandal Olive Kids','Sandal Kids',4,1266314,0,'sz33(2), sz31(2)'],
+  ['Original Loafers Black Women','Loafers',4,1647035,0,'sz38(1), sz40(1), sz37(1)'],
+];
+const tbody=document.getElementById('prod-table');
+prodData.forEach(([name,cat,qty,rev,ret,sizes],i)=>{
+  const tr=document.createElement('tr');
+  const retBadge=ret>0?`<span class="badge br">${ret}x return</span>`:'<span style="color:var(--muted);font-size:11px">—</span>';
+  const catMap={'Derby/Oxford':'bb','Loafers':'bg','Sandal':'bo','Boots':'br','Sneakers':'bp','Sandal Kids':'by'};
+  tr.innerHTML=`<td><span class="rank">#${i+1}</span></td><td style="font-weight:500">${name}</td><td><span class="badge ${catMap[cat]||'bw'}">${cat}</span></td><td style="color:var(--accent2);font-weight:600">${qty}x</td><td>Rp ${(rev/1000000).toFixed(1)}jt</td><td>Rp ${Math.round(rev/qty).toLocaleString('id')}</td><td>${retBadge}</td><td style="font-size:11px;color:var(--muted)">${sizes}</td>`;
+  tbody.appendChild(tr);
+});
+
+function sw(name,el){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');el.classList.add('active');}
+</script>
+</body>
+</html>
