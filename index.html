@@ -431,7 +431,7 @@ function calcVelocity() {
   const velocity = {};
   allData.forEach(r => {
     if(r.STATUS === 'RETURNED') return;
-    const sku = (r.SKU||'').trim();
+    const sku = String(r.SKU||'').trim();
     const ukuran = String(r.UKURAN||'').trim();
     const key = sku + '|' + ukuran;
     velocity[key] = (velocity[key]||0) + (parseInt(r.QTY)||1);
@@ -642,7 +642,7 @@ function renderStok() {
   const soldSkuSet = new Set();
   allData.forEach(r => {
     if(r.STATUS === 'RETURNED') return;
-    const sku = (r.SKU||'').trim();
+    const sku = String(r.SKU||'').trim();
     const ukuran = String(r.UKURAN||'').trim();
     soldSkuSet.add(sku + '|' + ukuran);
     soldSkuSet.add(sku); // juga simpan SKU tanpa ukuran untuk fallback
@@ -653,8 +653,8 @@ function renderStok() {
   // Sembunyikan jika: stok = 0 DAN tidak ada history penjualan sama sekali
   const stokWithStatus = allStok.map(r => {
     const stok = parseInt(r.STOK||0);
-    const key = (r.SKU||'')+'|'+String(r.UKURAN||'');
-    const sku = (r.SKU||'').trim();
+    const key = String(r.SKU||'')+'|'+String(r.UKURAN||'');
+    const sku = String(r.SKU||'').trim();
     const vel = velocity[key]||0;
     const status = getStatus(stok, vel);
     const daysLeft = getDaysLeft(stok, vel);
