@@ -138,6 +138,7 @@
   <button class="tab" onclick="sw('kota',this)">Kota</button>
   <button class="tab" onclick="sw('status',this)">Status</button>
   <button class="tab" onclick="sw('tabel',this)">Semua Data</button>
+  <button class="tab" onclick="sw('instan',this)">⚡ Instan</button>
   <button class="tab" onclick="sw('setting',this)">⚙ Setting</button>
 </div>
 
@@ -367,6 +368,101 @@
   </div>
 </div>
 
+
+<!-- INSTAN -->
+<div id="tab-instan" class="section">
+  <div id="instan-loading" class="loading"><div class="spinner"></div><p>Memuat data instan...</p></div>
+  <div id="instan-content" style="display:none">
+
+    <!-- SUGGEST BOX -->
+    <div id="instan-suggest" style="margin-bottom:16px"></div>
+
+    <!-- METRICS -->
+    <div class="mgrid" id="instan-metrics"></div>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="two">
+      <div class="cc" style="margin-bottom:0">
+        <h2>Tren Pesanan Instan Harian</h2>
+        <div class="cw" style="height:200px"><canvas id="c-instan-trend"></canvas></div>
+      </div>
+      <div class="cc" style="margin-bottom:0">
+        <h2>Platform Instan</h2>
+        <div class="lgnd" id="lgnd-instan-plat"></div>
+        <div class="cw" style="height:200px"><canvas id="c-instan-plat"></canvas></div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px"></div>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="two">
+      <div class="cc" style="margin-bottom:0">
+        <h2>Produk Terlaris (Instan)</h2>
+        <div class="cw" style="height:220px"><canvas id="c-instan-produk"></canvas></div>
+      </div>
+      <div class="cc" style="margin-bottom:0">
+        <h2>Sebaran Kota — Bekasi & Sekitar</h2>
+        <div class="lgnd" id="lgnd-instan-kota"></div>
+        <div class="cw" style="height:220px"><canvas id="c-instan-kota"></canvas></div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px"></div>
+
+    <!-- STATUS & KURIR -->
+    <div class="two">
+      <div class="cc" style="margin-bottom:0">
+        <h2>Status Pesanan Instan</h2>
+        <div class="cw" style="height:180px"><canvas id="c-instan-status"></canvas></div>
+      </div>
+      <div class="cc" style="margin-bottom:0">
+        <h2>Kurir Pilihan (Instan)</h2>
+        <div class="cw" style="height:180px"><canvas id="c-instan-kurir"></canvas></div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px"></div>
+
+    <!-- REVENUE PER PRODUK -->
+    <div class="cc">
+      <h2>Revenue per Produk (Instan)</h2>
+      <div class="cw" style="height:220px"><canvas id="c-instan-rev"></canvas></div>
+    </div>
+
+    <!-- TABLE -->
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <input id="instan-search" placeholder="Cari nama, produk, kota..." style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;flex:1;min-width:200px;outline:none" oninput="filterInstanTable()"/>
+      <select id="instan-filter-status" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none" onchange="filterInstanTable()">
+        <option value="">Semua Status</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="SHIPPED">Shipped</option>
+        <option value="RETURNED">Returned</option>
+        <option value="PROCESSING">Processing</option>
+      </select>
+    </div>
+    <div class="tc">
+      <h2 id="instan-tabel-count">Semua Data Instan</h2>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Tanggal</th><th>Platform</th><th>Pelanggan</th><th>Produk</th><th>Ukuran</th><th>Harga</th><th>Status</th><th>Kota</th><th>Kurir</th></tr></thead>
+        <tbody id="instan-tbody"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- SETUP GUIDE -->
+    <div class="cc" style="margin-top:8px">
+      <h2>Panduan Sheet INSTAN</h2>
+      <div style="font-size:13px;line-height:2;color:var(--text)">
+        Buat sheet bernama <strong>INSTAN</strong> di Google Sheets kamu dengan header yang sama persis seperti sheet PESANAN:
+        <div style="background:var(--surface2);border-radius:8px;padding:10px;margin-top:6px;font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2)">TANGGAL | PLATFORM | NO_PESANAN | PELANGGAN | PRODUK | SKU | UKURAN | QTY | HARGA | STATUS | KOTA | PROVINSI | KURIR</div>
+        <div style="margin-top:10px;padding:10px 12px;background:rgba(249,215,79,.07);border:1px solid rgba(249,215,79,.15);border-radius:8px;font-size:12px">
+          💡 Input manual pesanan yang kamu anggap "instan" ke sheet ini. Dashboard akan otomatis analisa dan kasih suggest khusus untuk penjualan di area Bekasi.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </main>
 <footer id="footer-text">Portee Goods · Gudang Peep Bekasi · Dashboard Live</footer>
 
@@ -378,6 +474,7 @@ const SHEET_URL_KEY = 'portee_sheet_url';
 let SHEET_URL = localStorage.getItem(SHEET_URL_KEY) || '';
 let allData = [];      // pesanan
 let allStok = [];      // stok
+let allInstan = [];    // instan
 let stokFilter = 'semua';
 let charts = {};
 
@@ -506,6 +603,14 @@ async function loadData() {
         TANGGAL_DISPLAY: fmtDate(r.TANGGAL)
       }));
     allStok = Array.isArray(json) ? [] : (json.stok||[]);
+    const rawInstan = Array.isArray(json) ? [] : (json.instan||[]);
+    allInstan = rawInstan
+      .filter(r => r.TANGGAL || r.NO_PESANAN)
+      .map(r => ({
+        ...r,
+        TANGGAL: normalizeDateKey(r.TANGGAL),
+        TANGGAL_DISPLAY: fmtDate(r.TANGGAL)
+      }));
     renderAll();
   } catch(e) {
     showAllLoaded();
@@ -548,6 +653,7 @@ function renderAll() {
   renderKota();
   renderStatus();
   renderTabel();
+  renderInstan();
   document.getElementById('total-badge').textContent = allData.length + ' PESANAN · ' + (window._stokWithStatus ? window._stokWithStatus.length : allStok.length) + ' SKU';
   document.getElementById('footer-text').textContent = 'Portee Goods · Gudang Peep Bekasi · Update: ' + new Date().toLocaleString('id-ID');
 }
@@ -973,6 +1079,234 @@ function sw(name,el){
   document.getElementById('tab-'+name).classList.add('active');
   el.classList.add('active');
 }
+
+// ============================================================
+// INSTAN
+// ============================================================
+let instanFiltered = [];
+
+function renderInstan() {
+  const d = allInstan;
+
+  if(d.length === 0) {
+    document.getElementById('instan-loading').style.display = 'none';
+    document.getElementById('instan-content').style.display = 'block';
+    document.getElementById('instan-metrics').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">Belum ada data instan. Buat sheet <strong>INSTAN</strong> di Google Sheets kamu, lalu refresh.</div>';
+    document.getElementById('instan-suggest').innerHTML = '';
+    return;
+  }
+
+  // === METRICS ===
+  const total = d.length;
+  const revenue = d.reduce((s,r)=>s+(parseFloat(r.HARGA)||0),0);
+  const completed = d.filter(r=>(r.STATUS||'').toUpperCase()==='COMPLETED').length;
+  const returned = d.filter(r=>(r.STATUS||'').toUpperCase()==='RETURNED').length;
+  const avgOrder = total ? revenue/total : 0;
+  const dates = d.map(r=>r.TANGGAL).filter(Boolean).sort();
+  const dateRange = dates.length ? fmtDate(dates[0])+' s.d. '+fmtDate(dates[dates.length-1]) : '—';
+  const platCount = count(d,'PLATFORM');
+  const topPlat = Object.entries(platCount).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('instan-metrics').innerHTML = `
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">Total Instan</div><div class="val">${total}</div><div class="sub">${dateRange}</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">Total Revenue</div><div class="val">${fmtShort(revenue)}</div><div class="sub">Semua order instan</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Avg per Order</div><div class="val">${fmtShort(avgOrder)}</div><div class="sub">Rata-rata nilai transaksi</div></div>
+    <div class="mc" style="--ac:var(--accent4)"><div class="lbl">Platform Terbesar</div><div class="val">${topPlat?topPlat[0]:'—'}</div><div class="sub">${topPlat?topPlat[1]+' pesanan':'—'}</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">✅ Completed</div><div class="val" style="color:var(--accent2)">${completed}</div><div class="sub">${total?(completed/total*100).toFixed(1)+'%':''} dari total</div></div>
+    <div class="mc" style="--ac:var(--red)"><div class="lbl">↩ Returned</div><div class="val" style="color:var(--red)">${returned}</div><div class="sub">${total?(returned/total*100).toFixed(1)+'%':''} return rate</div></div>
+  `;
+
+  // === SUGGEST BOX BEKASI ===
+  renderInstanSuggest(d);
+
+  // === TREND CHART ===
+  const dateCount = count(d,'TANGGAL');
+  const sortedDates = Object.keys(dateCount).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b));
+  const dateLabels = sortedDates.map(dt=>fmtDate(dt));
+  destroyChart('c-instan-trend');
+  charts['c-instan-trend'] = new Chart(document.getElementById('c-instan-trend'),{
+    type:'line',
+    data:{labels:dateLabels,datasets:[{data:sortedDates.map(x=>dateCount[x]),borderColor:'#f9d74f',backgroundColor:'rgba(249,215,79,0.1)',tension:.4,fill:true,pointRadius:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}}
+  });
+
+  // === PLATFORM DONUT ===
+  const platEntries = Object.entries(platCount).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('lgnd-instan-plat').innerHTML = platEntries.map((e,i)=>`<span><span class="ld" style="background:${COLORS[i]}"></span>${e[0]} ${e[1]}</span>`).join('');
+  destroyChart('c-instan-plat');
+  charts['c-instan-plat'] = new Chart(document.getElementById('c-instan-plat'),{
+    type:'doughnut',
+    data:{labels:platEntries.map(e=>e[0]),datasets:[{data:platEntries.map(e=>e[1]),backgroundColor:COLORS,borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7a8099',font:{size:10},padding:8}}},cutout:'60%'}
+  });
+
+  // === PRODUK TERLARIS ===
+  const prodCount = {};
+  d.forEach(r=>{const p=r.PRODUK||'Unknown';prodCount[p]=(prodCount[p]||0)+(parseInt(r.QTY)||1);});
+  const topProd = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  destroyChart('c-instan-produk');
+  charts['c-instan-produk'] = new Chart(document.getElementById('c-instan-produk'),{
+    type:'bar',
+    data:{labels:topProd.map(e=>e[0].length>28?e[0].substring(0,28)+'...':e[0]),datasets:[{data:topProd.map(e=>e[1]),backgroundColor:COLORS,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:TX,grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}
+  });
+
+  // === KOTA CHART — highlight Bekasi area ===
+  const kotaCount = count(d,'KOTA');
+  const bekasiArea = ['BEKASI','KOTA BEKASI','KABUPATEN BEKASI','BEKASI BARAT','BEKASI TIMUR','BEKASI UTARA','BEKASI SELATAN','CIKARANG','TAMBUN','CIBITUNG','TARUMAJAYA'];
+  const kotaEntries = Object.entries(kotaCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const kotaColors = kotaEntries.map(([k])=>bekasiArea.some(x=>k.toUpperCase().includes(x))?'#f9d74f':'#4f9cf9');
+  document.getElementById('lgnd-instan-kota').innerHTML = `<span><span class="ld" style="background:#f9d74f"></span>Area Bekasi</span><span><span class="ld" style="background:#4f9cf9"></span>Kota Lain</span>`;
+  destroyChart('c-instan-kota');
+  charts['c-instan-kota'] = new Chart(document.getElementById('c-instan-kota'),{
+    type:'bar',
+    data:{labels:kotaEntries.map(e=>e[0]),datasets:[{data:kotaEntries.map(e=>e[1]),backgroundColor:kotaColors,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:TX,grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}
+  });
+
+  // === STATUS ===
+  const statusColors={'COMPLETED':'#38e8b5','SHIPPED':'#4f9cf9','PROCESSING':'#f9d74f','RETURNED':'#f95f5f'};
+  const statusCount = count(d,'STATUS');
+  const statusEntries = Object.entries(statusCount).sort((a,b)=>b[1]-a[1]);
+  destroyChart('c-instan-status');
+  charts['c-instan-status'] = new Chart(document.getElementById('c-instan-status'),{
+    type:'doughnut',
+    data:{labels:statusEntries.map(e=>e[0]),datasets:[{data:statusEntries.map(e=>e[1]),backgroundColor:statusEntries.map(e=>statusColors[e[0]]||'#7a8099'),borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7a8099',font:{size:10},padding:8}}},cutout:'60%'}
+  });
+
+  // === KURIR ===
+  const kurirCount = count(d,'KURIR');
+  const sortedKurir = Object.entries(kurirCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  destroyChart('c-instan-kurir');
+  charts['c-instan-kurir'] = new Chart(document.getElementById('c-instan-kurir'),{
+    type:'bar',
+    data:{labels:sortedKurir.map(e=>e[0]),datasets:[{data:sortedKurir.map(e=>e[1]),backgroundColor:'#c97cf9',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:TX,grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}
+  });
+
+  // === REVENUE PER PRODUK ===
+  const prodRev = {};
+  d.forEach(r=>{const p=r.PRODUK||'Unknown';prodRev[p]=(prodRev[p]||0)+(parseFloat(r.HARGA)||0);});
+  const topRev = Object.entries(prodRev).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  destroyChart('c-instan-rev');
+  charts['c-instan-rev'] = new Chart(document.getElementById('c-instan-rev'),{
+    type:'bar',
+    data:{labels:topRev.map(e=>e[0].length>28?e[0].substring(0,28)+'...':e[0]),datasets:[{data:topRev.map(e=>e[1]),backgroundColor:'#38e8b5',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{...TX,callback:v=>fmtShort(v)},grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}
+  });
+
+  // === TABLE ===
+  instanFiltered = [...d];
+  renderInstanRows();
+}
+
+function renderInstanSuggest(d) {
+  if(!d || d.length === 0) return;
+
+  const bekasiaArea = ['BEKASI','KOTA BEKASI','KABUPATEN BEKASI','BEKASI BARAT','BEKASI TIMUR','BEKASI UTARA','BEKASI SELATAN','CIKARANG','TAMBUN','CIBITUNG','TARUMAJAYA'];
+
+  // Pesanan dari Bekasi
+  const bekasiOrders = d.filter(r=>bekasiaArea.some(x=>(r.KOTA||'').toUpperCase().includes(x)));
+  const bekasiFraction = d.length ? (bekasiOrders.length/d.length*100).toFixed(0) : 0;
+
+  // Produk terlaris di Bekasi
+  const bekasiBestProd = {};
+  bekasiOrders.forEach(r=>{const p=r.PRODUK||'Unknown';bekasiBestProd[p]=(bekasiBestProd[p]||0)+(parseInt(r.QTY)||1);});
+  const topBekasiBestProd = Object.entries(bekasiBestProd).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  // Return rate
+  const returnRate = d.length ? (d.filter(r=>(r.STATUS||'').toUpperCase()==='RETURNED').length/d.length*100).toFixed(1) : 0;
+
+  // Hari terbaik
+  const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const dayCount = {};
+  d.forEach(r=>{if(!r.TANGGAL)return;const day=new Date(r.TANGGAL).getDay();dayCount[day]=(dayCount[day]||0)+1;});
+  const bestDay = Object.entries(dayCount).sort((a,b)=>b[1]-a[1])[0];
+
+  // Kurir terpopuler
+  const kurirCount = count(d,'KURIR');
+  const topKurir = Object.entries(kurirCount).sort((a,b)=>b[1]-a[1])[0];
+
+  // Stok saran — produk terlaris tapi stok menipis
+  const topProdKeys = topBekasiBestProd.map(e=>e[0]);
+  const stokWarn = allStok.filter(r=>{
+    const stok=parseInt(r.STOK||0);
+    return stok<=5 && topProdKeys.some(p=>(r.NAMA_PRODUK||'').toLowerCase().includes(p.toLowerCase().substring(0,10)));
+  }).slice(0,3);
+
+  let suggests = [];
+
+  suggests.push(`⚡ <strong>${bekasiFraction}%</strong> order instan berasal dari area Bekasi (${bekasiOrders.length} dari ${d.length} pesanan)`);
+
+  if(topBekasiBestProd.length > 0) {
+    suggests.push(`🏆 Produk terlaris di Bekasi: <strong>${topBekasiBestProd.map(e=>e[0].substring(0,25)+' ('+e[1]+'x)').join(', ')}</strong>`);
+  }
+
+  if(bestDay) {
+    suggests.push(`📅 Hari paling ramai: <strong>${dayNames[bestDay[0]]}</strong> (${bestDay[1]} pesanan) — pastikan stok ready di hari ini`);
+  }
+
+  if(topKurir) {
+    suggests.push(`🚚 Kurir favoritas pelanggan instan: <strong>${topKurir[0]}</strong> (${topKurir[1]}x dipakai)`);
+  }
+
+  if(parseFloat(returnRate) > 5) {
+    suggests.push(`⚠️ Return rate <strong>${returnRate}%</strong> — cukup tinggi, perlu cek kualitas produk atau deskripsi yang tidak sesuai`);
+  } else {
+    suggests.push(`✅ Return rate hanya <strong>${returnRate}%</strong> — sangat bagus!`);
+  }
+
+  if(stokWarn.length > 0) {
+    suggests.push(`📦 Stok menipis untuk produk laris: <strong>${stokWarn.map(r=>r.NAMA_PRODUK+' ('+r.STOK+' unit)').join(', ')}</strong> — segera restock!`);
+  }
+
+  // Saran promosi
+  if(parseFloat(bekasiFraction) >= 50) {
+    suggests.push(`💡 Karena ${bekasiFraction}% order dari Bekasi, pertimbangkan <strong>promo gratis ongkir khusus Bekasi</strong> untuk tingkatkan konversi`);
+  } else {
+    suggests.push(`💡 Order dari luar Bekasi cukup besar — pertimbangkan <strong>ekspansi jangkauan same-day ke Depok/Bogor/Tangerang</strong>`);
+  }
+
+  document.getElementById('instan-suggest').innerHTML = `
+    <div style="background:rgba(249,215,79,0.07);border:1px solid rgba(249,215,79,0.2);border-radius:14px;padding:18px 20px">
+      <div style="font-size:11px;color:var(--yellow);font-family:'Space Mono',monospace;font-weight:700;margin-bottom:12px;letter-spacing:.8px">⚡ INSIGHT & SUGGEST — PENJUALAN INSTAN BEKASI</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${suggests.map(s=>`<div style="font-size:12px;line-height:1.6;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid rgba(249,215,79,0.4)">${s}</div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function filterInstanTable() {
+  const q = (document.getElementById('instan-search')?.value||'').toLowerCase();
+  const stat = (document.getElementById('instan-filter-status')?.value||'').toUpperCase();
+  instanFiltered = allInstan.filter(r=>{
+    const matchQ = !q||[r.PELANGGAN,r.PRODUK,r.KOTA,r.NO_PESANAN].some(v=>(v||'').toLowerCase().includes(q));
+    const matchS = !stat||(r.STATUS||'').toUpperCase()===stat;
+    return matchQ && matchS;
+  });
+  renderInstanRows();
+}
+
+function renderInstanRows() {
+  const statusColors={'COMPLETED':'bg','SHIPPED':'bb','PROCESSING':'by','RETURNED':'br'};
+  const platColors={'SHOPEE':'bo','TOKOPEDIA':'bg','TIKTOK':'bp'};
+  document.getElementById('instan-tabel-count').textContent = `Menampilkan ${instanFiltered.length} dari ${allInstan.length} data instan`;
+  document.getElementById('instan-tbody').innerHTML = instanFiltered.slice(0,200).map(r=>`
+    <tr>
+      <td style="white-space:nowrap">${r.TANGGAL_DISPLAY||r.TANGGAL||'—'}</td>
+      <td><span class="badge ${platColors[(r.PLATFORM||'').toUpperCase()]||'bw'}">${r.PLATFORM||'—'}</span></td>
+      <td>${r.PELANGGAN||'—'}</td>
+      <td style="font-size:11px">${r.PRODUK||'—'}</td>
+      <td style="text-align:center">${r.UKURAN||'—'}</td>
+      <td style="white-space:nowrap">${fmt(r.HARGA||0)}</td>
+      <td><span class="badge ${statusColors[(r.STATUS||'').toUpperCase()]||'bw'}">${r.STATUS||'—'}</span></td>
+      <td>${r.KOTA||'—'}</td>
+      <td style="font-size:11px">${r.KURIR||'—'}</td>
+    </tr>`).join('');
+}
+
 if(SHEET_URL) document.getElementById('sheet-url').value=SHEET_URL;
 loadData();
 setInterval(()=>{if(SHEET_URL)loadData();},5*60*1000);
