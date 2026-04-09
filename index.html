@@ -427,26 +427,7 @@
       <div class="cw" style="height:220px"><canvas id="c-instan-rev"></canvas></div>
     </div>
 
-    <!-- TABLE -->
-    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-      <input id="instan-search" placeholder="Cari nama, produk, kota..." style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;flex:1;min-width:200px;outline:none" oninput="filterInstanTable()"/>
-      <select id="instan-filter-status" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none" onchange="filterInstanTable()">
-        <option value="">Semua Status</option>
-        <option value="COMPLETED">Completed</option>
-        <option value="SHIPPED">Shipped</option>
-        <option value="RETURNED">Returned</option>
-        <option value="PROCESSING">Processing</option>
-      </select>
-    </div>
-    <div class="tc">
-      <h2 id="instan-tabel-count">Semua Data Instan</h2>
-      <div style="overflow-x:auto">
-      <table>
-        <thead><tr><th>Tanggal</th><th>Platform</th><th>Pelanggan</th><th>Produk</th><th>Ukuran</th><th>Harga</th><th>Status</th><th>Kota</th><th>Kurir</th></tr></thead>
-        <tbody id="instan-tbody"></tbody>
-      </table>
-      </div>
-    </div>
+
 
     <!-- SETUP GUIDE -->
     <div class="cc" style="margin-top:8px">
@@ -1204,75 +1185,165 @@ function renderInstan() {
 function renderInstanSuggest(d) {
   if(!d || d.length === 0) return;
 
-  const bekasiaArea = ['BEKASI','KOTA BEKASI','KABUPATEN BEKASI','BEKASI BARAT','BEKASI TIMUR','BEKASI UTARA','BEKASI SELATAN','CIKARANG','TAMBUN','CIBITUNG','TARUMAJAYA'];
+  const bekasiArea = ['BEKASI','KOTA BEKASI','KABUPATEN BEKASI','BEKASI BARAT','BEKASI TIMUR','BEKASI UTARA','BEKASI SELATAN','CIKARANG','TAMBUN','CIBITUNG','TARUMAJAYA'];
 
-  // Pesanan dari Bekasi
-  const bekasiOrders = d.filter(r=>bekasiaArea.some(x=>(r.KOTA||'').toUpperCase().includes(x)));
+  // === DATA DASAR ===
+  const bekasiOrders = d.filter(r=>bekasiArea.some(x=>(r.KOTA||'').toUpperCase().includes(x)));
+  const nonBekasiOrders = d.filter(r=>!bekasiArea.some(x=>(r.KOTA||'').toUpperCase().includes(x)));
   const bekasiFraction = d.length ? (bekasiOrders.length/d.length*100).toFixed(0) : 0;
+  const returnRate = d.length ? (d.filter(r=>(r.STATUS||'').toUpperCase()==='RETURNED').length/d.length*100).toFixed(1) : 0;
+  const completedRate = d.length ? (d.filter(r=>(r.STATUS||'').toUpperCase()==='COMPLETED').length/d.length*100).toFixed(1) : 0;
+  const revenue = d.reduce((s,r)=>s+(parseFloat(r.HARGA)||0),0);
+  const bekasiRevenue = bekasiOrders.reduce((s,r)=>s+(parseFloat(r.HARGA)||0),0);
 
-  // Produk terlaris di Bekasi
+  // === PRODUK TERLARIS BEKASI ===
   const bekasiBestProd = {};
   bekasiOrders.forEach(r=>{const p=r.PRODUK||'Unknown';bekasiBestProd[p]=(bekasiBestProd[p]||0)+(parseInt(r.QTY)||1);});
-  const topBekasiBestProd = Object.entries(bekasiBestProd).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topBekasiBestProd = Object.entries(bekasiBestProd).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
-  // Return rate
-  const returnRate = d.length ? (d.filter(r=>(r.STATUS||'').toUpperCase()==='RETURNED').length/d.length*100).toFixed(1) : 0;
+  // === PRODUK TERLARIS OVERALL ===
+  const allProdCount = {};
+  d.forEach(r=>{const p=r.PRODUK||'Unknown';allProdCount[p]=(allProdCount[p]||0)+(parseInt(r.QTY)||1);});
+  const topAllProd = Object.entries(allProdCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
-  // Hari terbaik
+  // === HARI TERBAIK ===
   const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   const dayCount = {};
   d.forEach(r=>{if(!r.TANGGAL)return;const day=new Date(r.TANGGAL).getDay();dayCount[day]=(dayCount[day]||0)+1;});
-  const bestDay = Object.entries(dayCount).sort((a,b)=>b[1]-a[1])[0];
+  const sortedDays = Object.entries(dayCount).sort((a,b)=>b[1]-a[1]);
+  const bestDay = sortedDays[0];
+  const worstDay = sortedDays[sortedDays.length-1];
 
-  // Kurir terpopuler
+  // === TREN BULAN ===
+  const monthCount = {};
+  d.forEach(r=>{if(!r.TANGGAL)return;const m=r.TANGGAL.substring(0,7);monthCount[m]=(monthCount[m]||0)+1;});
+  const sortedMonths = Object.entries(monthCount).sort((a,b)=>a[0].localeCompare(b[0]));
+  const latestMonth = sortedMonths[sortedMonths.length-1];
+  const prevMonth = sortedMonths[sortedMonths.length-2];
+  const trendPct = (latestMonth && prevMonth && prevMonth[1]) ? (((latestMonth[1]-prevMonth[1])/prevMonth[1])*100).toFixed(0) : null;
+
+  // === KURIR ===
   const kurirCount = count(d,'KURIR');
-  const topKurir = Object.entries(kurirCount).sort((a,b)=>b[1]-a[1])[0];
+  const topKurir = Object.entries(kurirCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
 
-  // Stok saran — produk terlaris tapi stok menipis
-  const topProdKeys = topBekasiBestProd.map(e=>e[0]);
+  // === KOTA POTENSIAL (non-Bekasi tapi banyak order) ===
+  const nonBekasiKota = {};
+  nonBekasiOrders.forEach(r=>{const k=r.KOTA||'Unknown';nonBekasiKota[k]=(nonBekasiKota[k]||0)+1;});
+  const topNonBekasi = Object.entries(nonBekasiKota).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  // === STOK WARNING untuk produk laris ===
+  const topProdKeys = topAllProd.map(e=>e[0]);
   const stokWarn = allStok.filter(r=>{
     const stok=parseInt(r.STOK||0);
-    return stok<=5 && topProdKeys.some(p=>(r.NAMA_PRODUK||'').toLowerCase().includes(p.toLowerCase().substring(0,10)));
-  }).slice(0,3);
+    return stok<=5 && topProdKeys.some(p=>(r.NAMA_PRODUK||'').toLowerCase().includes(p.toLowerCase().substring(0,12)));
+  }).slice(0,4);
 
-  let suggests = [];
+  // === UKURAN TERLARIS ===
+  const ukuranCount = {};
+  d.forEach(r=>{const u=String(r.UKURAN||'').trim();if(u&&u!=='—')ukuranCount[u]=(ukuranCount[u]||0)+(parseInt(r.QTY)||1);});
+  const topUkuran = Object.entries(ukuranCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
 
-  suggests.push(`⚡ <strong>${bekasiFraction}%</strong> order instan berasal dari area Bekasi (${bekasiOrders.length} dari ${d.length} pesanan)`);
+  // === BUILD CARDS ===
+  const cards = [];
 
+  // Card 1 — Bekasi dominance
+  cards.push({
+    color:'#f9d74f', icon:'📍',
+    title:'Dominasi Area Bekasi',
+    content:`<strong>${bekasiFraction}%</strong> order instan (${bekasiOrders.length} pesanan, ${fmtShort(bekasiRevenue)} revenue) berasal dari area Bekasi & sekitarnya.
+    ${parseFloat(bekasiFraction)>=60
+      ? '<br><br>✅ <em>Bekasi sudah jadi basis kuat — fokus pertahankan loyalitas pelanggan Bekasi dengan promo repeat order.</em>'
+      : '<br><br>💡 <em>Masih ada potensi besar untuk perbesar penetrasi di Bekasi — coba promo khusus area Bekasi.</em>'}`
+  });
+
+  // Card 2 — Produk terlaris Bekasi
   if(topBekasiBestProd.length > 0) {
-    suggests.push(`🏆 Produk terlaris di Bekasi: <strong>${topBekasiBestProd.map(e=>e[0].substring(0,25)+' ('+e[1]+'x)').join(', ')}</strong>`);
+    cards.push({
+      color:'#38e8b5', icon:'🏆',
+      title:'Produk Terlaris di Bekasi',
+      content: topBekasiBestProd.map((e,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<topBekasiBestProd.length-1?'border-bottom:1px solid rgba(255,255,255,0.05)':''}"><span style="font-size:11px">${e[0].substring(0,32)}</span><span style="color:#38e8b5;font-weight:700;font-family:monospace">${e[1]}x</span></div>`).join('')
+      + '<br><em style="font-size:11px;color:var(--muted)">💡 Pastikan stok produk ini selalu ready untuk order Bekasi</em>'
+    });
   }
 
-  if(bestDay) {
-    suggests.push(`📅 Hari paling ramai: <strong>${dayNames[bestDay[0]]}</strong> (${bestDay[1]} pesanan) — pastikan stok ready di hari ini`);
+  // Card 3 — Tren & hari terbaik
+  cards.push({
+    color:'#4f9cf9', icon:'📅',
+    title:'Pola Waktu Order',
+    content:`Hari paling ramai: <strong>${bestDay?dayNames[bestDay[0]]:'—'}</strong> (${bestDay?bestDay[1]:0} pesanan)
+    <br>Hari paling sepi: <strong>${worstDay?dayNames[worstDay[0]]:'—'}</strong> (${worstDay?worstDay[1]:0} pesanan)
+    ${trendPct!==null ? `<br><br>Tren bulan terakhir: <strong style="color:${parseFloat(trendPct)>=0?'#38e8b5':'#f95f5f'}">${parseFloat(trendPct)>=0?'▲':'▼'} ${Math.abs(trendPct)}%</strong> vs bulan sebelumnya` : ''}
+    <br><br><em style="font-size:11px;color:var(--muted)">💡 Jadwalkan promo & stok penuh sebelum hari ${bestDay?dayNames[bestDay[0]]:'ramai'}</em>`
+  });
+
+  // Card 4 — Kurir & operasional
+  if(topKurir.length > 0) {
+    cards.push({
+      color:'#c97cf9', icon:'🚚',
+      title:'Pilihan Kurir Pelanggan',
+      content: topKurir.map((e,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<topKurir.length-1?'border-bottom:1px solid rgba(255,255,255,0.05)':''}"><span style="font-size:11px">${e[0]}</span><span style="color:#c97cf9;font-weight:700;font-family:monospace">${e[1]}x</span></div>`).join('')
+      + '<br><em style="font-size:11px;color:var(--muted)">💡 Prioritaskan availability kurir terpopuler di jam operasional</em>'
+    });
   }
 
-  if(topKurir) {
-    suggests.push(`🚚 Kurir favoritas pelanggan instan: <strong>${topKurir[0]}</strong> (${topKurir[1]}x dipakai)`);
+  // Card 5 — Return rate & kualitas
+  cards.push({
+    color: parseFloat(returnRate)>5?'#f95f5f':'#38e8b5', icon: parseFloat(returnRate)>5?'⚠️':'✅',
+    title:'Kualitas Order',
+    content:`Completion rate: <strong style="color:#38e8b5">${completedRate}%</strong>
+    <br>Return rate: <strong style="color:${parseFloat(returnRate)>5?'#f95f5f':'#38e8b5'}">${returnRate}%</strong>
+    ${parseFloat(returnRate)>5
+      ? '<br><br>⚠️ <em>Return rate cukup tinggi — cek deskripsi produk, ukuran, dan kondisi packaging</em>'
+      : '<br><br>✅ <em>Return rate sangat rendah — kualitas pengiriman & produk sudah baik!</em>'}`
+  });
+
+  // Card 6 — Potensi ekspansi
+  if(topNonBekasi.length > 0) {
+    cards.push({
+      color:'#f97c4f', icon:'🗺️',
+      title:'Kota Potensial di Luar Bekasi',
+      content: topNonBekasi.map((e,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<topNonBekasi.length-1?'border-bottom:1px solid rgba(255,255,255,0.05)':''}"><span style="font-size:11px">${e[0]}</span><span style="color:#f97c4f;font-weight:700;font-family:monospace">${e[1]} order</span></div>`).join('')
+      + '<br><em style="font-size:11px;color:var(--muted)">💡 Kota-kota ini bisa jadi target ekspansi layanan instan berikutnya</em>'
+    });
   }
 
-  if(parseFloat(returnRate) > 5) {
-    suggests.push(`⚠️ Return rate <strong>${returnRate}%</strong> — cukup tinggi, perlu cek kualitas produk atau deskripsi yang tidak sesuai`);
-  } else {
-    suggests.push(`✅ Return rate hanya <strong>${returnRate}%</strong> — sangat bagus!`);
-  }
-
+  // Card 7 — Stok warning
   if(stokWarn.length > 0) {
-    suggests.push(`📦 Stok menipis untuk produk laris: <strong>${stokWarn.map(r=>r.NAMA_PRODUK+' ('+r.STOK+' unit)').join(', ')}</strong> — segera restock!`);
+    cards.push({
+      color:'#f95f5f', icon:'📦',
+      title:'⚠️ Stok Menipis — Produk Laris',
+      content: stokWarn.map((r,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<stokWarn.length-1?'border-bottom:1px solid rgba(255,255,255,0.05)':''}"><span style="font-size:11px">${(r.NAMA_PRODUK||'').substring(0,28)}</span><span style="color:#f95f5f;font-weight:700;font-family:monospace">${r.STOK} unit</span></div>`).join('')
+      + '<br><em style="font-size:11px;color:var(--muted)">🚨 Segera restock sebelum kehabisan di tengah demand tinggi!</em>'
+    });
   }
 
-  // Saran promosi
-  if(parseFloat(bekasiFraction) >= 50) {
-    suggests.push(`💡 Karena ${bekasiFraction}% order dari Bekasi, pertimbangkan <strong>promo gratis ongkir khusus Bekasi</strong> untuk tingkatkan konversi`);
-  } else {
-    suggests.push(`💡 Order dari luar Bekasi cukup besar — pertimbangkan <strong>ekspansi jangkauan same-day ke Depok/Bogor/Tangerang</strong>`);
+  // Card 8 — Ukuran terlaris
+  if(topUkuran.length > 0) {
+    cards.push({
+      color:'#81bfff', icon:'👟',
+      title:'Ukuran Paling Diminati',
+      content: topUkuran.map((e,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;${i<topUkuran.length-1?'border-bottom:1px solid rgba(255,255,255,0.05)':''}"><span style="font-size:11px">Size <strong>${e[0]}</strong></span><span style="color:#81bfff;font-weight:700;font-family:monospace">${e[1]}x</span></div>`).join('')
+      + '<br><em style="font-size:11px;color:var(--muted)">💡 Prioritaskan restock ukuran ini — paling sering dibeli</em>'
+    });
   }
+
+  // === RENDER ===
+  const half = Math.ceil(cards.length/2);
+  const col1 = cards.slice(0,half);
+  const col2 = cards.slice(half);
+
+  const cardHTML = (c) => `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;border-top:3px solid ${c.color}">
+      <div style="font-size:11px;font-family:'Space Mono',monospace;font-weight:700;color:${c.color};margin-bottom:10px;letter-spacing:.5px">${c.icon} ${c.title.toUpperCase()}</div>
+      <div style="font-size:12px;line-height:1.8;color:var(--text)">${c.content}</div>
+    </div>`;
 
   document.getElementById('instan-suggest').innerHTML = `
-    <div style="background:rgba(249,215,79,0.07);border:1px solid rgba(249,215,79,0.2);border-radius:14px;padding:18px 20px">
-      <div style="font-size:11px;color:var(--yellow);font-family:'Space Mono',monospace;font-weight:700;margin-bottom:12px;letter-spacing:.8px">⚡ INSIGHT & SUGGEST — PENJUALAN INSTAN BEKASI</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${suggests.map(s=>`<div style="font-size:12px;line-height:1.6;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid rgba(249,215,79,0.4)">${s}</div>`).join('')}
+    <div style="background:rgba(249,215,79,0.05);border:1px solid rgba(249,215,79,0.15);border-radius:16px;padding:20px 22px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--yellow);font-family:'Space Mono',monospace;font-weight:700;margin-bottom:16px;letter-spacing:.8px">⚡ INSIGHT & SUGGEST — PENJUALAN INSTAN BEKASI</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:12px">${col1.map(cardHTML).join('')}</div>
+        <div style="display:flex;flex-direction:column;gap:12px">${col2.map(cardHTML).join('')}</div>
       </div>
     </div>
   `;
