@@ -1064,7 +1064,6 @@ function sw(name,el){
 // ============================================================
 // INSTAN
 // ============================================================
-let instanFiltered = [];
 
 function renderInstan() {
   const d = allInstan;
@@ -1178,8 +1177,6 @@ function renderInstan() {
   });
 
   // === TABLE ===
-  instanFiltered = [...d];
-  renderInstanRows();
 }
 
 function renderInstanSuggest(d) {
@@ -1349,34 +1346,7 @@ function renderInstanSuggest(d) {
   `;
 }
 
-function filterInstanTable() {
-  const q = (document.getElementById('instan-search')?.value||'').toLowerCase();
-  const stat = (document.getElementById('instan-filter-status')?.value||'').toUpperCase();
-  instanFiltered = allInstan.filter(r=>{
-    const matchQ = !q||[r.PELANGGAN,r.PRODUK,r.KOTA,r.NO_PESANAN].some(v=>(v||'').toLowerCase().includes(q));
-    const matchS = !stat||(r.STATUS||'').toUpperCase()===stat;
-    return matchQ && matchS;
-  });
-  renderInstanRows();
-}
 
-function renderInstanRows() {
-  const statusColors={'COMPLETED':'bg','SHIPPED':'bb','PROCESSING':'by','RETURNED':'br'};
-  const platColors={'SHOPEE':'bo','TOKOPEDIA':'bg','TIKTOK':'bp'};
-  document.getElementById('instan-tabel-count').textContent = `Menampilkan ${instanFiltered.length} dari ${allInstan.length} data instan`;
-  document.getElementById('instan-tbody').innerHTML = instanFiltered.slice(0,200).map(r=>`
-    <tr>
-      <td style="white-space:nowrap">${r.TANGGAL_DISPLAY||r.TANGGAL||'—'}</td>
-      <td><span class="badge ${platColors[(r.PLATFORM||'').toUpperCase()]||'bw'}">${r.PLATFORM||'—'}</span></td>
-      <td>${r.PELANGGAN||'—'}</td>
-      <td style="font-size:11px">${r.PRODUK||'—'}</td>
-      <td style="text-align:center">${r.UKURAN||'—'}</td>
-      <td style="white-space:nowrap">${fmt(r.HARGA||0)}</td>
-      <td><span class="badge ${statusColors[(r.STATUS||'').toUpperCase()]||'bw'}">${r.STATUS||'—'}</span></td>
-      <td>${r.KOTA||'—'}</td>
-      <td style="font-size:11px">${r.KURIR||'—'}</td>
-    </tr>`).join('');
-}
 
 if(SHEET_URL) document.getElementById('sheet-url').value=SHEET_URL;
 loadData();
