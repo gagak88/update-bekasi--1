@@ -620,9 +620,10 @@ function renderOverview() {
 
   // Trend
   const dateCount = count(d,'TANGGAL');
-  const sortedDates = Object.keys(dateCount).sort();
+  const sortedDates = Object.keys(dateCount).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b));
+  const sortedDateLabels = sortedDates.map(dt=>fmtDate(dt));
   destroyChart('c-trend');
-  charts['c-trend'] = new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:sortedDates,datasets:[{data:sortedDates.map(d=>dateCount[d]),borderColor:'#4f9cf9',backgroundColor:'rgba(79,156,249,0.1)',tension:.4,fill:true,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:GR},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+  charts['c-trend'] = new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:sortedDateLabels,datasets:[{data:sortedDates.map(d=>dateCount[d]),borderColor:'#4f9cf9',backgroundColor:'rgba(79,156,249,0.1)',tension:.4,fill:true,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:GR},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
 }
 
 // ============================================================
@@ -804,7 +805,9 @@ function renderTrend() {
   const d = allData;
   const dateCount = count(d,'TANGGAL');
   const dateRevenue = sumBy(d,'TANGGAL','HARGA');
-  const sortedDates = Object.keys(dateCount).sort();
+  // Sort kronologis berdasarkan nilai tanggal (YYYY-MM-DD)
+  const sortedDates = Object.keys(dateCount).filter(Boolean).sort((a,b)=>new Date(a)-new Date(b));
+  const dateLabels = sortedDates.map(dt=>fmtDate(dt));
   const monthCount = {};
   d.forEach(r=>{if(!r.TANGGAL)return;const m=r.TANGGAL.toString().substring(0,7);monthCount[m]=(monthCount[m]||0)+1;});
   const topMonth = Object.entries(monthCount).sort((a,b)=>b[1]-a[1])[0];
@@ -813,15 +816,15 @@ function renderTrend() {
   document.getElementById('trend-metrics').innerHTML = `
     <div class="mc" style="--ac:var(--accent)"><div class="lbl">Total Pesanan</div><div class="val">${d.length}</div><div class="sub">Semua periode</div></div>
     <div class="mc" style="--ac:var(--accent2)"><div class="lbl">Bulan Terbanyak</div><div class="val">${topMonth?topMonth[0]:'—'}</div><div class="sub">${topMonth?topMonth[1]+' pesanan':'—'}</div></div>
-    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Hari Tersibuk</div><div class="val">${maxDay?maxDay[0]:'—'}</div><div class="sub">${maxDay?maxDay[1]+' pesanan':'—'}</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Hari Tersibuk</div><div class="val">${maxDay?fmtDate(maxDay[0]):'—'}</div><div class="sub">${maxDay?maxDay[1]+' pesanan':'—'}</div></div>
     <div class="mc" style="--ac:var(--accent4)"><div class="lbl">Avg/Hari Aktif</div><div class="val">${sortedDates.length?(d.length/sortedDates.length).toFixed(1):'—'}</div><div class="sub">Per hari ada transaksi</div></div>
   `;
 
   destroyChart('c-trend2');
-  charts['c-trend2'] = new Chart(document.getElementById('c-trend2'),{type:'bar',data:{labels:sortedDates,datasets:[{data:sortedDates.map(d=>dateCount[d]),backgroundColor:'#4f9cf9',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+  charts['c-trend2'] = new Chart(document.getElementById('c-trend2'),{type:'bar',data:{labels:dateLabels,datasets:[{data:sortedDates.map(d=>dateCount[d]),backgroundColor:'#4f9cf9',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
 
   destroyChart('c-trend-rev');
-  charts['c-trend-rev'] = new Chart(document.getElementById('c-trend-rev'),{type:'line',data:{labels:sortedDates,datasets:[{data:sortedDates.map(d=>dateRevenue[d]||0),borderColor:'#38e8b5',backgroundColor:'rgba(56,232,181,0.1)',tension:.4,fill:true,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:GR},y:{beginAtZero:true,ticks:{...TX,callback:v=>fmtShort(v)},grid:GR}}}});
+  charts['c-trend-rev'] = new Chart(document.getElementById('c-trend-rev'),{type:'line',data:{labels:dateLabels,datasets:[{data:sortedDates.map(d=>dateRevenue[d]||0),borderColor:'#38e8b5',backgroundColor:'rgba(56,232,181,0.1)',tension:.4,fill:true,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:GR},y:{beginAtZero:true,ticks:{...TX,callback:v=>fmtShort(v)},grid:GR}}}});
 }
 
 // ============================================================
