@@ -385,6 +385,30 @@ const GR={color:'rgba(255,255,255,0.04)'}, TX={color:'#7a8099'};
 const COLORS=['#4f9cf9','#38e8b5','#f97c4f','#c97cf9','#f9d74f','#f95f5f','#81bfff','#5ef5c8','#ffaa85','#e0a8ff','#ffc107','#00bcd4'];
 const fmt = n => 'Rp '+Math.round(n||0).toLocaleString('id');
 const fmtShort = n => (n||0)>=1000000?'Rp '+((n||0)/1000000).toFixed(1)+'jt':(n||0)>=1000?'Rp '+((n||0)/1000).toFixed(0)+'rb':fmt(n);
+const MONTHS_SHORT = [];
+function fmtDate(val) {
+  if(!val) return '—';
+  // Jika sudah berupa Date object dari Google Sheets (serial number atau JS Date)
+  let d;
+  if(val instanceof Date) {
+    d = val;
+  } else {
+    // Coba parse string — bisa "2024-01-15T10:30:00", "15/01/2024 10:30:00", dll
+    d = new Date(val);
+  }
+  if(isNaN(d.getTime())) {
+    // Fallback: ambil 10 karakter pertama saja jika parse gagal
+    return String(val).substring(0,10);
+  }
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+function normalizeDateKey(val) {
+  // Untuk grouping chart — kembalikan string "YYYY-MM-DD"
+  if(!val) return '';
+  let d = val instanceof Date ? val : new Date(val);
+  if(isNaN(d.getTime())) return String(val).substring(0,10);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 const count = (arr,key) => { const m={}; arr.forEach(r=>{const v=r[key]||'Unknown';m[v]=(m[v]||0)+1;}); return m; };
 const sumBy = (arr,key,valKey) => { const m={}; arr.forEach(r=>{const v=r[key]||'Unknown';m[v]=(m[v]||0)+(parseFloat(r[valKey])||0);}); return m; };
 function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
@@ -473,13 +497,15 @@ async function loadData() {
     const json = await res.json();
 
     // Support both old (array) and new (object) format
-    if(Array.isArray(json)) {
-      allData = json.filter(r => r.TANGGAL || r.NO_PESANAN);
-      allStok = [];
-    } else {
-      allData = (json.pesanan||[]).filter(r => r.TANGGAL || r.NO_PESANAN);
-      allStok = json.stok||[];
-    }
+    const rawPesanan = Array.isArray(json) ? json : (json.pesanan||[]);
+    allData = rawPesanan
+      .filter(r => r.TANGGAL || r.NO_PESANAN)
+      .map(r => ({
+        ...r,
+        TANGGAL: normalizeDateKey(r.TANGGAL),
+        TANGGAL_DISPLAY: fmtDate(r.TANGGAL)
+      }));
+    allStok = Array.isArray(json) ? [] : (json.stok||[]);
     renderAll();
   } catch(e) {
     showAllLoaded();
@@ -522,7 +548,7 @@ function renderAll() {
   renderKota();
   renderStatus();
   renderTabel();
-  document.getElementById('total-badge').textContent = allData.length + ' PESANAN · ' + allStok.length + ' SKU';
+  document.getElementById('total-badge').textContent = allData.length + ' PESANAN · ' + (window._stokWithStatus ? window._stokWithStatus.length : allStok.length) + ' SKU';
   document.getElementById('footer-text').textContent = 'Portee Goods · Gudang Peep Bekasi · Update: ' + new Date().toLocaleString('id-ID');
 }
 
@@ -534,7 +560,7 @@ function renderOverview() {
   const total = d.length;
   const revenue = d.reduce((s,r)=>s+(parseFloat(r.HARGA)||0),0);
   const dates = d.map(r=>r.TANGGAL).filter(Boolean).sort();
-  const dateRange = dates.length ? dates[0]+' s.d. '+dates[dates.length-1] : '—';
+  const dateRange = dates.length ? fmtDate(dates[0])+' s.d. '+fmtDate(dates[dates.length-1]) : '—';
   const platCount = count(d,'PLATFORM');
   const topPlat = Object.entries(platCount).sort((a,b)=>b[1]-a[1])[0];
 
@@ -612,15 +638,33 @@ function renderStok() {
 
   const {velocity={}, totalDays=1} = calcVelocity();
 
-  // Hitung status semua stok
+  // Buat set SKU yang pernah terjual (dari data pesanan)
+  const soldSkuSet = new Set();
+  allData.forEach(r => {
+    if(r.STATUS === 'RETURNED') return;
+    const sku = (r.SKU||'').trim();
+    const ukuran = String(r.UKURAN||'').trim();
+    soldSkuSet.add(sku + '|' + ukuran);
+    soldSkuSet.add(sku); // juga simpan SKU tanpa ukuran untuk fallback
+  });
+
+  // Hitung status semua stok, lalu filter:
+  // Tampilkan jika: stok > 0, ATAU pernah terjual (stok habis tapi demand ada)
+  // Sembunyikan jika: stok = 0 DAN tidak ada history penjualan sama sekali
   const stokWithStatus = allStok.map(r => {
     const stok = parseInt(r.STOK||0);
     const key = (r.SKU||'')+'|'+String(r.UKURAN||'');
+    const sku = (r.SKU||'').trim();
     const vel = velocity[key]||0;
     const status = getStatus(stok, vel);
     const daysLeft = getDaysLeft(stok, vel);
     const restockQty = getRestockQty(vel);
-    return {...r, stok, vel, status, daysLeft, restockQty, key};
+    const pernahTerjual = soldSkuSet.has(key) || soldSkuSet.has(sku);
+    return {...r, stok, vel, status, daysLeft, restockQty, key, pernahTerjual};
+  }).filter(r => {
+    // Sembunyikan hanya jika stok = 0 DAN tidak pernah terjual sama sekali
+    if(r.stok <= 0 && !r.pernahTerjual) return false;
+    return true;
   });
 
   // Metrics
@@ -635,7 +679,7 @@ function renderStok() {
     <div class="mc" style="--ac:var(--accent3)"><div class="lbl">🟠 Kritis (≤3 hari)</div><div class="val" style="color:var(--accent3)">${kritisN}</div><div class="sub">Stok habis dalam 3 hari</div></div>
     <div class="mc" style="--ac:var(--yellow)"><div class="lbl">🟡 Menipis (≤7 hari)</div><div class="val" style="color:var(--yellow)">${menipisN}</div><div class="sub">Stok habis dalam 7 hari</div></div>
     <div class="mc" style="--ac:var(--accent2)"><div class="lbl">🟢 Aman</div><div class="val" style="color:var(--accent2)">${amanN}</div><div class="sub">Stok cukup >7 hari</div></div>
-    <div class="mc" style="--ac:var(--accent)"><div class="lbl">Total SKU</div><div class="val">${allStok.length}</div><div class="sub">Semua varian ukuran</div></div>
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">Total SKU</div><div class="val">${stokWithStatus.length}</div><div class="sub">SKU aktif ditampilkan</div></div>
     <div class="mc" style="--ac:var(--accent4)"><div class="lbl">Total Unit Stok</div><div class="val">${totalStok}</div><div class="sub">Semua SKU digabung</div></div>
   `;
 
@@ -871,7 +915,7 @@ function renderStatus() {
   const returns = d.filter(r=>r.STATUS==='RETURNED');
   document.getElementById('return-list').innerHTML = returns.length?returns.map(r=>`
     <div style="background:rgba(249,95,95,.08);border:1px solid rgba(249,95,95,.2);border-radius:8px;padding:10px 12px;margin-bottom:8px">
-      <div style="font-size:10px;color:var(--red);font-family:'Space Mono',monospace;margin-bottom:3px">${r.TANGGAL||'—'} · ${r.PLATFORM||'—'}</div>
+      <div style="font-size:10px;color:var(--red);font-family:'Space Mono',monospace;margin-bottom:3px">${r.TANGGAL_DISPLAY||r.TANGGAL||'—'} · ${r.PLATFORM||'—'}</div>
       <div style="font-size:12px">${r.PELANGGAN||'—'} · ${r.PRODUK||'—'}</div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px">${fmt(r.HARGA||0)} · ${r.KURIR||'—'}</div>
     </div>`).join(''):'<div style="color:var(--muted);font-size:12px;padding:12px">Tidak ada return 🎉</div>';
@@ -905,7 +949,7 @@ function renderTabelRows() {
   document.getElementById('tabel-count').textContent=`Menampilkan ${filteredData.length} dari ${allData.length} data`;
   document.getElementById('tabel-tbody').innerHTML=filteredData.slice(0,200).map(r=>`
     <tr>
-      <td style="white-space:nowrap">${r.TANGGAL||'—'}</td>
+      <td style="white-space:nowrap">${r.TANGGAL_DISPLAY||r.TANGGAL||'—'}</td>
       <td><span class="badge ${platColors[(r.PLATFORM||'').toUpperCase()]||'bw'}">${r.PLATFORM||'—'}</span></td>
       <td>${r.PELANGGAN||'—'}</td>
       <td style="font-size:11px">${r.PRODUK||'—'}</td>
