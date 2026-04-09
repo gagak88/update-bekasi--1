@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Live — Portee Goods Bekasi</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0d0f14;--surface:#161922;--surface2:#1e2330;--border:rgba(255,255,255,0.07);--text:#f0f2f8;--muted:#7a8099;--accent:#4f9cf9;--accent2:#38e8b5;--accent3:#f97c4f;--accent4:#c97cf9;--yellow:#f9d74f;--red:#f95f5f}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+  .logo{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+  header h1{font-size:14px;font-weight:600}
+  header p{font-size:11px;color:var(--muted);margin-top:1px}
+  .hbadge{margin-left:auto;background:rgba(79,156,249,0.12);border:1px solid rgba(79,156,249,0.3);color:var(--accent);font-size:11px;font-family:'Space Mono',monospace;padding:4px 12px;border-radius:20px;white-space:nowrap}
+  .live-dot{display:inline-block;width:7px;height:7px;background:var(--accent2);border-radius:50%;margin-right:5px;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .tabs{display:flex;gap:2px;padding:16px 28px 0;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:8px 14px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;border-radius:6px 6px 0 0}
+  .tab:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  main{padding:22px 28px;max-width:1280px}
+  .section{display:none}.section.active{display:block}
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:18px}
+  .mc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;position:relative;overflow:hidden}
+  .mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--accent))}
+  .mc .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-family:'Space Mono',monospace;margin-bottom:5px}
+  .mc .val{font-size:20px;font-weight:600;letter-spacing:-.5px}
+  .mc .sub{font-size:10px;color:var(--muted);margin-top:3px}
+  .cc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+  .cc h2{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-family:'Space Mono',monospace;margin-bottom:14px}
+  .cw{position:relative;width:100%}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+  .tc{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px}
+  .tc h2{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-family:'Space Mono',monospace;padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  thead th{padding:8px 14px;text-align:left;font-size:10px;color:var(--muted);background:rgba(255,255,255,0.02);font-family:'Space Mono',monospace;letter-spacing:.5px;white-space:nowrap}
+  tbody tr{border-top:1px solid var(--border);transition:background .15s}
+  tbody tr:hover{background:rgba(255,255,255,0.03)}
+  tbody td{padding:8px 14px}
+  .badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
+  .bb{background:rgba(79,156,249,.15);color:#81bfff}
+  .bg{background:rgba(56,232,181,.15);color:#5ef5c8}
+  .bo{background:rgba(249,124,79,.15);color:#ffaa85}
+  .bp{background:rgba(201,124,249,.15);color:#e0a8ff}
+  .br{background:rgba(249,95,95,.15);color:#ff9595}
+  .by{background:rgba(249,215,79,.15);color:#ffe07a}
+  .bw{background:rgba(255,255,255,.08);color:#ccd0e0}
+  .lgnd{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:11px;color:var(--muted)}
+  .lgnd span{display:flex;align-items:center;gap:4px}
+  .ld{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+  .bwrap{margin-bottom:9px}
+  .blabel{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+  .btrack{background:var(--surface2);border-radius:3px;height:6px;overflow:hidden}
+  .bfill{height:6px;border-radius:3px;transition:width .8s ease}
+
+  /* STOK SPECIFIC */
+  .stok-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;overflow:hidden;transition:transform .15s}
+  .stok-card:hover{transform:translateY(-1px)}
+  .stok-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .stok-card.kritis::before{background:var(--red)}
+  .stok-card.menipis::before{background:var(--yellow)}
+  .stok-card.aman::before{background:var(--accent2)}
+  .stok-card.habis::before{background:rgba(249,95,95,0.4)}
+  .stok-nama{font-size:12px;font-weight:600;margin-bottom:4px;line-height:1.4}
+  .stok-sku{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:8px}
+  .stok-info{display:flex;justify-content:space-between;align-items:flex-end}
+  .stok-angka{font-size:24px;font-weight:700;letter-spacing:-1px;line-height:1}
+  .stok-angka.kritis{color:var(--red)}
+  .stok-angka.menipis{color:var(--yellow)}
+  .stok-angka.aman{color:var(--accent2)}
+  .stok-angka.habis{color:rgba(249,95,95,0.5)}
+  .stok-meta{text-align:right;font-size:10px;color:var(--muted);line-height:1.6}
+  .stok-bar-wrap{margin-top:10px}
+  .stok-bar-bg{background:var(--surface2);border-radius:4px;height:4px;overflow:hidden}
+  .stok-bar-fill{height:4px;border-radius:4px;transition:width .6s ease}
+  .status-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;font-family:'Space Mono',monospace}
+  .status-pill.kritis{background:rgba(249,95,95,.15);color:#ff9595}
+  .status-pill.menipis{background:rgba(249,215,79,.15);color:#ffe07a}
+  .status-pill.aman{background:rgba(56,232,181,.15);color:#5ef5c8}
+  .status-pill.habis{background:rgba(249,95,95,.08);color:rgba(249,95,95,.6)}
+  .dot{width:6px;height:6px;border-radius:50%}
+  .dot.kritis{background:var(--red)}
+  .dot.menipis{background:var(--yellow)}
+  .dot.aman{background:var(--accent2)}
+  .dot.habis{background:rgba(249,95,95,0.5)}
+  .stok-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+  .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .filter-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+  .filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .days-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-family:'Space Mono',monospace}
+  .days-badge.kritis{background:rgba(249,95,95,.15);color:#ff9595}
+  .days-badge.menipis{background:rgba(249,215,79,.15);color:#ffe07a}
+  .days-badge.aman{background:rgba(56,232,181,.15);color:#5ef5c8}
+  .days-badge.habis{background:rgba(249,95,95,.08);color:rgba(249,95,95,.5)}
+
+  /* LOADING */
+  .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted)}
+  .spinner{width:36px;height:36px;border:3px solid var(--surface2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* CONFIG */
+  .config-panel{background:rgba(79,156,249,0.07);border:1px solid rgba(79,156,249,0.2);border-radius:14px;padding:20px;margin-bottom:18px}
+  .config-panel h3{font-size:12px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:12px}
+  .config-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Space Mono',monospace;margin-bottom:10px;outline:none}
+  .config-input:focus{border-color:var(--accent)}
+  .config-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+  .config-btn:hover{opacity:.85}
+  .error-box{background:rgba(249,95,95,.08);border:1px solid rgba(249,95,95,.2);border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--red)}
+  .alert-box{background:rgba(249,215,79,.07);border:1px solid rgba(249,215,79,.2);border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;color:var(--yellow)}
+
+  footer{text-align:center;padding:20px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);margin-top:6px;font-family:'Space Mono',monospace}
+  @media(max-width:700px){.two,.three{grid-template-columns:1fr}.stok-grid{grid-template-columns:1fr 1fr}main{padding:12px}header{padding:12px}.tabs{padding:12px 12px 0}}
+  ::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PG</div>
+  <div>
+    <h1>Gudang Peep Bekasi — Portee Goods</h1>
+    <p><span class="live-dot"></span>Dashboard Live · Pesanan & Stok</p>
+  </div>
+  <div class="hbadge" id="total-badge">Memuat...</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('overview',this)">Ringkasan</button>
+  <button class="tab" onclick="sw('stok',this)">📦 Stok & Restock</button>
+  <button class="tab" onclick="sw('trend',this)">Tren Harian</button>
+  <button class="tab" onclick="sw('produk',this)">Produk</button>
+  <button class="tab" onclick="sw('kota',this)">Kota</button>
+  <button class="tab" onclick="sw('status',this)">Status</button>
+  <button class="tab" onclick="sw('tabel',this)">Semua Data</button>
+  <button class="tab" onclick="sw('setting',this)">⚙ Setting</button>
+</div>
+
+<main>
+
+<!-- SETTING -->
+<div id="tab-setting" class="section">
+  <div class="config-panel">
+    <h3>KONFIGURASI SUMBER DATA</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Masukkan URL Web App dari Google Apps Script kamu.</p>
+    <input class="config-input" id="sheet-url" placeholder="https://script.google.com/macros/s/XXXXXXX/exec"/>
+    <button class="config-btn" onclick="saveAndLoad()">Simpan & Muat Data</button>
+  </div>
+  <div class="cc">
+    <h2>Panduan Setup Google Sheets</h2>
+    <div style="font-size:13px;line-height:2;color:var(--text)">
+      <div style="margin-bottom:16px">
+        <div style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;margin-bottom:6px">SHEET 1 — PESANAN</div>
+        Buat sheet bernama <strong>PESANAN</strong> dengan header:
+        <div style="background:var(--surface2);border-radius:8px;padding:10px;margin-top:6px;font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2)">TANGGAL | PLATFORM | NO_PESANAN | PELANGGAN | PRODUK | SKU | UKURAN | QTY | HARGA | STATUS | KOTA | PROVINSI | KURIR</div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;margin-bottom:6px">SHEET 2 — STOK (BARU)</div>
+        Buat sheet bernama <strong>STOK</strong> dengan header:
+        <div style="background:var(--surface2);border-radius:8px;padding:10px;margin-top:6px;font-family:'Space Mono',monospace;font-size:10px;color:var(--accent2)">SKU | NAMA_PRODUK | UKURAN | STOK</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Isi dengan data stok kamu saat ini. Update kolom STOK setiap ada perubahan (masuk/keluar barang).</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;margin-bottom:6px">APPS SCRIPT & DEPLOY</div>
+        Extensions → Apps Script → paste kode <strong>Code.gs</strong> → Deploy → Web App → Anyone → copy URL → paste di atas.
+      </div>
+    </div>
+  </div>
+  <div class="cc">
+    <h2>Contoh Isian Sheet STOK</h2>
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>SKU</th><th>NAMA_PRODUK</th><th>UKURAN</th><th>STOK</th></tr></thead>
+      <tbody>
+        <tr><td>SSY0102BLK-DM</td><td>Original Derby Black</td><td>41</td><td>8</td></tr>
+        <tr><td>SSY0102BLK-DM</td><td>Original Derby Black</td><td>42</td><td>3</td></tr>
+        <tr><td>SSY0102BLK-DM</td><td>Original Derby Black</td><td>43</td><td>0</td></tr>
+        <tr><td>PSD0661BLK-NN</td><td>Alpaca Sandal Onyx</td><td>40</td><td>5</td></tr>
+        <tr><td>PSD0661BLK-NN</td><td>Alpaca Sandal Onyx</td><td>42</td><td>2</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div style="margin-top:10px;padding:10px 12px;background:rgba(249,215,79,.07);border:1px solid rgba(249,215,79,.15);border-radius:8px;font-size:12px">
+      💡 Setiap SKU + Ukuran = 1 baris. Dashboard akan otomatis hitung rata-rata penjualan harian dari data PESANAN untuk estimasi kapan stok habis.
+    </div>
+  </div>
+</div>
+
+<!-- OVERVIEW -->
+<div id="tab-overview" class="section active">
+  <div id="overview-loading" class="loading"><div class="spinner"></div><p>Memuat data...</p><p style="font-size:11px;margin-top:6px">Buka tab ⚙ Setting untuk setup</p></div>
+  <div id="overview-content" style="display:none">
+    <div id="stok-alert-ov"></div>
+    <div class="mgrid">
+      <div class="mc" style="--ac:var(--accent)"><div class="lbl">Total Pesanan</div><div class="val" id="s-total">—</div><div class="sub" id="s-daterange">—</div></div>
+      <div class="mc" style="--ac:var(--accent2)"><div class="lbl">Total Revenue</div><div class="val" id="s-revenue">—</div><div class="sub">Jumlah harga semua item</div></div>
+      <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Avg per Order</div><div class="val" id="s-avg">—</div><div class="sub">Rata-rata nilai transaksi</div></div>
+      <div class="mc" style="--ac:var(--accent4)"><div class="lbl">Platform Terbesar</div><div class="val" id="s-platform">—</div><div class="sub" id="s-platform-sub">—</div></div>
+      <div class="mc" style="--ac:var(--yellow)"><div class="lbl">Stok Kritis</div><div class="val" id="s-kritis">—</div><div class="sub">SKU perlu restock segera</div></div>
+      <div class="mc" style="--ac:var(--red)"><div class="lbl">Stok Habis</div><div class="val" id="s-habis">—</div><div class="sub">SKU dengan stok = 0</div></div>
+    </div>
+    <div class="two">
+      <div class="cc" style="margin-bottom:0">
+        <h2>Platform</h2>
+        <div class="lgnd" id="lgnd-platform"></div>
+        <div class="cw" style="height:180px"><canvas id="c-plat"></canvas></div>
+      </div>
+      <div class="cc" style="margin-bottom:0">
+        <h2>Status Stok Keseluruhan</h2>
+        <div class="lgnd" id="lgnd-stok-ov"></div>
+        <div class="cw" style="height:180px"><canvas id="c-stok-ov"></canvas></div>
+      </div>
+    </div>
+    <div class="cc">
+      <h2>Tren Pesanan Harian</h2>
+      <div class="cw" style="height:200px"><canvas id="c-trend"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- STOK -->
+<div id="tab-stok" class="section">
+  <div id="stok-loading" class="loading"><div class="spinner"></div><p>Memuat data stok...</p></div>
+  <div id="stok-content" style="display:none">
+
+    <!-- SUMMARY METRICS -->
+    <div class="mgrid" id="stok-metrics"></div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <span style="font-size:11px;color:var(--muted)">Filter:</span>
+      <button class="filter-btn active" onclick="filterStok('semua',this)">Semua</button>
+      <button class="filter-btn" onclick="filterStok('habis',this)">🔴 Habis</button>
+      <button class="filter-btn" onclick="filterStok('kritis',this)">🟠 Kritis</button>
+      <button class="filter-btn" onclick="filterStok('menipis',this)">🟡 Menipis</button>
+      <button class="filter-btn" onclick="filterStok('aman',this)">🟢 Aman</button>
+      <input id="stok-search" placeholder="Cari produk / SKU..." style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;color:var(--text);font-size:11px;outline:none;flex:1;min-width:150px" oninput="renderStokCards()"/>
+    </div>
+
+    <!-- RESTOCK PRIORITY TABLE -->
+    <div class="tc" id="restock-section">
+      <h2>
+        <span style="color:var(--red)">⚠</span> Daftar Prioritas Restock
+        <span id="restock-count" style="font-size:10px;color:var(--muted);font-weight:400;margin-left:4px"></span>
+      </h2>
+      <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama Produk</th>
+            <th>SKU</th>
+            <th>Size</th>
+            <th>Stok</th>
+            <th>Terjual/Hari</th>
+            <th>Est. Habis</th>
+            <th>Status</th>
+            <th>Rekomendasi Order</th>
+          </tr>
+        </thead>
+        <tbody id="restock-tbody"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- STOK CARDS GRID -->
+    <div class="cc" style="margin-bottom:10px">
+      <h2>Semua SKU — <span id="stok-count-label" style="color:var(--accent)">0 item</span></h2>
+    </div>
+    <div class="stok-grid" id="stok-grid"></div>
+
+    <!-- CHART: STOK PER PRODUK -->
+    <div class="cc">
+      <h2>Stok per Produk (Total semua ukuran)</h2>
+      <div class="cw" style="height:320px"><canvas id="c-stok-produk"></canvas></div>
+    </div>
+
+    <!-- CHART: VELOCITY -->
+    <div class="cc">
+      <h2>Kecepatan Terjual per Produk (Item/Hari rata-rata)</h2>
+      <div class="cw" style="height:300px"><canvas id="c-velocity"></canvas></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TREND -->
+<div id="tab-trend" class="section">
+  <div id="trend-loading" class="loading"><div class="spinner"></div><p>Memuat...</p></div>
+  <div id="trend-content" style="display:none">
+    <div class="mgrid" id="trend-metrics"></div>
+    <div class="cc"><h2>Pesanan per Hari</h2><div class="cw" style="height:240px"><canvas id="c-trend2"></canvas></div></div>
+    <div class="cc"><h2>Revenue per Hari</h2><div class="cw" style="height:220px"><canvas id="c-trend-rev"></canvas></div></div>
+  </div>
+</div>
+
+<!-- PRODUK -->
+<div id="tab-produk" class="section">
+  <div id="produk-loading" class="loading"><div class="spinner"></div><p>Memuat...</p></div>
+  <div id="produk-content" style="display:none">
+    <div class="cc"><h2>Top 15 Produk Terlaris</h2><div class="cw" style="height:380px"><canvas id="c-produk"></canvas></div></div>
+    <div class="tc"><h2>Detail Produk</h2>
+      <table><thead><tr><th>#</th><th>Produk</th><th>Terjual</th><th>Revenue</th><th>Avg/item</th><th>Return</th><th>Stok Tersisa</th></tr></thead>
+      <tbody id="produk-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- KOTA -->
+<div id="tab-kota" class="section">
+  <div id="kota-loading" class="loading"><div class="spinner"></div><p>Memuat...</p></div>
+  <div id="kota-content" style="display:none">
+    <div class="cc"><h2>Top 10 Kota Tujuan</h2><div id="kota-bars"></div></div>
+    <div class="two">
+      <div class="cc" style="margin-bottom:0"><h2>Provinsi</h2><div class="lgnd" id="lgnd-prov"></div><div class="cw" style="height:200px"><canvas id="c-prov"></canvas></div></div>
+      <div class="cc" style="margin-bottom:0"><h2>Platform per Kota (Top 5)</h2><div class="cw" style="height:200px"><canvas id="c-kota-plat"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div id="tab-status" class="section">
+  <div id="status-loading" class="loading"><div class="spinner"></div><p>Memuat...</p></div>
+  <div id="status-content" style="display:none">
+    <div class="mgrid" id="status-metrics"></div>
+    <div class="two">
+      <div class="cc" style="margin-bottom:0"><h2>Status Pesanan</h2><div class="cw" style="height:220px"><canvas id="c-status2"></canvas></div></div>
+      <div class="cc" style="margin-bottom:0"><h2>Pesanan Returned</h2><div id="return-list" style="max-height:280px;overflow-y:auto"></div></div>
+    </div>
+    <div class="cc"><h2>Kurir Terlaris</h2><div class="cw" style="height:220px"><canvas id="c-kurir"></canvas></div></div>
+  </div>
+</div>
+
+<!-- TABEL -->
+<div id="tab-tabel" class="section">
+  <div id="tabel-loading" class="loading"><div class="spinner"></div><p>Memuat...</p></div>
+  <div id="tabel-content" style="display:none">
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <input id="search-input" placeholder="Cari nama, produk, kota..." style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;flex:1;min-width:200px;outline:none" oninput="filterTable()"/>
+      <select id="filter-platform" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none" onchange="filterTable()">
+        <option value="">Semua Platform</option>
+        <option value="SHOPEE">Shopee</option>
+        <option value="TOKOPEDIA">Tokopedia</option>
+        <option value="TIKTOK">TikTok</option>
+      </select>
+      <select id="filter-status" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none" onchange="filterTable()">
+        <option value="">Semua Status</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="SHIPPED">Shipped</option>
+        <option value="RETURNED">Returned</option>
+        <option value="PROCESSING">Processing</option>
+      </select>
+    </div>
+    <div class="tc">
+      <h2 id="tabel-count">Semua Data</h2>
+      <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Tanggal</th><th>Platform</th><th>Pelanggan</th><th>Produk</th><th>Ukuran</th><th>Harga</th><th>Status</th><th>Kota</th><th>Kurir</th></tr></thead>
+        <tbody id="tabel-tbody"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+<footer id="footer-text">Portee Goods · Gudang Peep Bekasi · Dashboard Live</footer>
+
+<script>
+// ============================================================
+// GLOBALS
+// ============================================================
+const SHEET_URL_KEY = 'portee_sheet_url';
+let SHEET_URL = localStorage.getItem(SHEET_URL_KEY) || '';
+let allData = [];      // pesanan
+let allStok = [];      // stok
+let stokFilter = 'semua';
+let charts = {};
+
+const GR={color:'rgba(255,255,255,0.04)'}, TX={color:'#7a8099'};
+const COLORS=['#4f9cf9','#38e8b5','#f97c4f','#c97cf9','#f9d74f','#f95f5f','#81bfff','#5ef5c8','#ffaa85','#e0a8ff','#ffc107','#00bcd4'];
+const fmt = n => 'Rp '+Math.round(n||0).toLocaleString('id');
+const fmtShort = n => (n||0)>=1000000?'Rp '+((n||0)/1000000).toFixed(1)+'jt':(n||0)>=1000?'Rp '+((n||0)/1000).toFixed(0)+'rb':fmt(n);
+const MONTHS_SHORT = [];
+function fmtDate(val) {
+  if(!val) return '—';
+  // Jika sudah berupa Date object dari Google Sheets (serial number atau JS Date)
+  let d;
+  if(val instanceof Date) {
+    d = val;
+  } else {
+    // Coba parse string — bisa "2024-01-15T10:30:00", "15/01/2024 10:30:00", dll
+    d = new Date(val);
+  }
+  if(isNaN(d.getTime())) {
+    // Fallback: ambil 10 karakter pertama saja jika parse gagal
+    return String(val).substring(0,10);
+  }
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+function normalizeDateKey(val) {
+  // Untuk grouping chart — kembalikan string "YYYY-MM-DD"
+  if(!val) return '';
+  let d = val instanceof Date ? val : new Date(val);
+  if(isNaN(d.getTime())) return String(val).substring(0,10);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+const count = (arr,key) => { const m={}; arr.forEach(r=>{const v=r[key]||'Unknown';m[v]=(m[v]||0)+1;}); return m; };
+const sumBy = (arr,key,valKey) => { const m={}; arr.forEach(r=>{const v=r[key]||'Unknown';m[v]=(m[v]||0)+(parseFloat(r[valKey])||0);}); return m; };
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+// ============================================================
+// STOK LOGIC
+// ============================================================
+
+// Hitung rata-rata penjualan per SKU+Ukuran per hari
+function calcVelocity() {
+  // Hitung rentang hari dari data pesanan
+  const dates = allData.map(r=>r.TANGGAL).filter(Boolean).map(d=>new Date(d)).filter(d=>!isNaN(d));
+  if(dates.length < 2) return {};
+
+  const minDate = new Date(Math.min(...dates));
+  const maxDate = new Date(Math.max(...dates));
+  const totalDays = Math.max(1, Math.round((maxDate - minDate) / (1000*60*60*24)) + 1);
+
+  // Count penjualan per SKU+Ukuran
+  const velocity = {};
+  allData.forEach(r => {
+    if(r.STATUS === 'RETURNED') return;
+    const sku = String(r.SKU||'').trim();
+    const ukuran = String(r.UKURAN||'').trim();
+    const key = sku + '|' + ukuran;
+    velocity[key] = (velocity[key]||0) + (parseInt(r.QTY)||1);
+  });
+
+  // Ubah ke per hari
+  Object.keys(velocity).forEach(k => {
+    velocity[k] = velocity[k] / totalDays;
+  });
+
+  return { velocity, totalDays };
+}
+
+// Hitung velocity per nama produk (untuk chart)
+function calcProductVelocity() {
+  const dates = allData.map(r=>r.TANGGAL).filter(Boolean).map(d=>new Date(d)).filter(d=>!isNaN(d));
+  if(dates.length < 2) return {};
+  const minDate = new Date(Math.min(...dates));
+  const maxDate = new Date(Math.max(...dates));
+  const totalDays = Math.max(1, Math.round((maxDate - minDate) / (1000*60*60*24)) + 1);
+  const velProd = {};
+  allData.forEach(r => {
+    if(r.STATUS === 'RETURNED') return;
+    const prod = (r.PRODUK||'Unknown').trim();
+    velProd[prod] = (velProd[prod]||0) + (parseInt(r.QTY)||1);
+  });
+  Object.keys(velProd).forEach(k => { velProd[k] = velProd[k] / totalDays; });
+  return velProd;
+}
+
+function getStatus(stok, velPerDay) {
+  if(stok <= 0) return 'habis';
+  if(velPerDay <= 0) {
+    if(stok <= 2) return 'kritis';
+    if(stok <= 5) return 'menipis';
+    return 'aman';
+  }
+  const daysLeft = stok / velPerDay;
+  if(daysLeft <= 3) return 'kritis';
+  if(daysLeft <= 7) return 'menipis';
+  return 'aman';
+}
+
+function getDaysLeft(stok, velPerDay) {
+  if(stok <= 0) return 0;
+  if(velPerDay <= 0) return 999;
+  return Math.round(stok / velPerDay);
+}
+
+function getRestockQty(velPerDay, coverDays=14) {
+  if(velPerDay <= 0) return 5;
+  return Math.ceil(velPerDay * coverDays);
+}
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+async function loadData() {
+  if(!SHEET_URL) { showAllLoaded(); return; }
+  try {
+    const res = await fetch(SHEET_URL + '?t=' + Date.now());
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+
+    // Support both old (array) and new (object) format
+    const rawPesanan = Array.isArray(json) ? json : (json.pesanan||[]);
+    allData = rawPesanan
+      .filter(r => r.TANGGAL || r.NO_PESANAN)
+      .map(r => ({
+        ...r,
+        TANGGAL: normalizeDateKey(r.TANGGAL),
+        TANGGAL_DISPLAY: fmtDate(r.TANGGAL)
+      }));
+    allStok = Array.isArray(json) ? [] : (json.stok||[]);
+    renderAll();
+  } catch(e) {
+    showAllLoaded();
+    showError('Gagal memuat data: '+e.message);
+  }
+}
+
+function showError(msg) {
+  document.querySelectorAll('.error-box').forEach(el=>el.remove());
+  const el=document.createElement('div');
+  el.className='error-box';
+  el.innerHTML='⚠️ '+msg;
+  document.querySelector('main').prepend(el);
+}
+
+function showAllLoaded() {
+  document.querySelectorAll('[id$="-loading"]').forEach(el=>el.style.display='none');
+  document.querySelectorAll('[id$="-content"]').forEach(el=>el.style.display='block');
+}
+
+function saveAndLoad() {
+  const url = document.getElementById('sheet-url').value.trim();
+  if(!url){alert('URL tidak boleh kosong!');return;}
+  localStorage.setItem(SHEET_URL_KEY, url);
+  SHEET_URL = url;
+  document.querySelectorAll('.error-box').forEach(el=>el.remove());
+  showAllLoaded();
+  loadData();
+}
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+function renderAll() {
+  showAllLoaded();
+  renderOverview();
+  renderStok();
+  renderTrend();
+  renderProduk();
+  renderKota();
+  renderStatus();
+  renderTabel();
+  document.getElementById('total-badge').textContent = allData.length + ' PESANAN · ' + (window._stokWithStatus ? window._stokWithStatus.length : allStok.length) + ' SKU';
+  document.getElementById('footer-text').textContent = 'Portee Goods · Gudang Peep Bekasi · Update: ' + new Date().toLocaleString('id-ID');
+}
+
+// ============================================================
+// OVERVIEW
+// ============================================================
+function renderOverview() {
+  const d = allData;
+  const total = d.length;
+  const revenue = d.reduce((s,r)=>s+(parseFloat(r.HARGA)||0),0);
+  const dates = d.map(r=>r.TANGGAL).filter(Boolean).sort();
+  const dateRange = dates.length ? fmtDate(dates[0])+' s.d. '+fmtDate(dates[dates.length-1]) : '—';
+  const platCount = count(d,'PLATFORM');
+  const topPlat = Object.entries(platCount).sort((a,b)=>b[1]-a[1])[0];
+
+  // Stok summary
+  const {velocity={}} = allStok.length ? calcVelocity() : {};
+  const habisCount = allStok.filter(r=>parseInt(r.STOK||0)<=0).length;
+  const kritisCount = allStok.filter(r=>{
+    const stok=parseInt(r.STOK||0);
+    if(stok<=0) return false;
+    const key=(r.SKU||'')+'|'+String(r.UKURAN||'');
+    const vel=velocity[key]||0;
+    return getStatus(stok,vel)==='kritis';
+  }).length;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-daterange').textContent = dateRange;
+  document.getElementById('s-revenue').textContent = fmtShort(revenue);
+  document.getElementById('s-avg').textContent = total?fmtShort(revenue/total):'—';
+  document.getElementById('s-platform').textContent = topPlat?topPlat[0]:'—';
+  document.getElementById('s-platform-sub').textContent = topPlat?topPlat[1]+' pesanan':'—';
+  document.getElementById('s-kritis').textContent = kritisCount;
+  document.getElementById('s-habis').textContent = habisCount;
+
+  // Alert jika ada stok kritis/habis
+  const alertEl = document.getElementById('stok-alert-ov');
+  if(habisCount > 0 || kritisCount > 0) {
+    alertEl.innerHTML = `<div class="alert-box">⚠️ <strong>${habisCount} SKU habis</strong> dan <strong>${kritisCount} SKU kritis</strong> — segera cek tab 📦 Stok & Restock!</div>`;
+  } else {
+    alertEl.innerHTML = '';
+  }
+
+  // Platform donut
+  const platEntries = Object.entries(platCount).sort((a,b)=>b[1]-a[1]);
+  const lgndP = document.getElementById('lgnd-platform');
+  lgndP.innerHTML = platEntries.map((e,i)=>`<span><span class="ld" style="background:${COLORS[i]}"></span>${e[0]} ${e[1]}</span>`).join('');
+  destroyChart('c-plat');
+  charts['c-plat'] = new Chart(document.getElementById('c-plat'),{type:'doughnut',data:{labels:platEntries.map(e=>e[0]),datasets:[{data:platEntries.map(e=>e[1]),backgroundColor:COLORS,borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}});
+
+  // Stok overview donut
+  if(allStok.length > 0) {
+    const {velocity:vel={}} = calcVelocity();
+    let amanN=0, menipisN=0, kritisN=0, habisN=0;
+    allStok.forEach(r=>{
+      const stok=parseInt(r.STOK||0);
+      const key=(r.SKU||'')+'|'+String(r.UKURAN||'');
+      const s=getStatus(stok,vel[key]||0);
+      if(s==='aman') amanN++;
+      else if(s==='menipis') menipisN++;
+      else if(s==='kritis') kritisN++;
+      else habisN++;
+    });
+    const lgndS = document.getElementById('lgnd-stok-ov');
+    lgndS.innerHTML = `<span><span class="ld" style="background:#38e8b5"></span>Aman ${amanN}</span><span><span class="ld" style="background:#f9d74f"></span>Menipis ${menipisN}</span><span><span class="ld" style="background:#f97c4f"></span>Kritis ${kritisN}</span><span><span class="ld" style="background:#f95f5f"></span>Habis ${habisN}</span>`;
+    destroyChart('c-stok-ov');
+    charts['c-stok-ov'] = new Chart(document.getElementById('c-stok-ov'),{type:'doughnut',data:{labels:['Aman','Menipis','Kritis','Habis'],datasets:[{data:[amanN,menipisN,kritisN,habisN],backgroundColor:['#38e8b5','#f9d74f','#f97c4f','#f95f5f'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}});
+  }
+
+  // Trend
+  const dateCount = count(d,'TANGGAL');
+  const sortedDates = Object.keys(dateCount).sort();
+  destroyChart('c-trend');
+  charts['c-trend'] = new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:sortedDates,datasets:[{data:sortedDates.map(d=>dateCount[d]),borderColor:'#4f9cf9',backgroundColor:'rgba(79,156,249,0.1)',tension:.4,fill:true,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:GR},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+}
+
+// ============================================================
+// STOK RENDER
+// ============================================================
+function renderStok() {
+  if(allStok.length === 0) {
+    document.getElementById('stok-metrics').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">Belum ada data stok. Tambahkan sheet STOK di Google Sheets kamu, lalu refresh.</div>';
+    document.getElementById('restock-section').style.display='none';
+    document.getElementById('stok-grid').innerHTML='';
+    return;
+  }
+
+  const {velocity={}, totalDays=1} = calcVelocity();
+
+  // Buat set SKU yang pernah terjual (dari data pesanan)
+  const soldSkuSet = new Set();
+  allData.forEach(r => {
+    if(r.STATUS === 'RETURNED') return;
+    const sku = String(r.SKU||'').trim();
+    const ukuran = String(r.UKURAN||'').trim();
+    soldSkuSet.add(sku + '|' + ukuran);
+    soldSkuSet.add(sku); // juga simpan SKU tanpa ukuran untuk fallback
+  });
+
+  // Hitung status semua stok, lalu filter:
+  // Tampilkan jika: stok > 0, ATAU pernah terjual (stok habis tapi demand ada)
+  // Sembunyikan jika: stok = 0 DAN tidak ada history penjualan sama sekali
+  const stokWithStatus = allStok.map(r => {
+    const stok = parseInt(r.STOK||0);
+    const key = String(r.SKU||'')+'|'+String(r.UKURAN||'');
+    const sku = String(r.SKU||'').trim();
+    const vel = velocity[key]||0;
+    const status = getStatus(stok, vel);
+    const daysLeft = getDaysLeft(stok, vel);
+    const restockQty = getRestockQty(vel);
+    const pernahTerjual = soldSkuSet.has(key) || soldSkuSet.has(sku);
+    return {...r, stok, vel, status, daysLeft, restockQty, key, pernahTerjual};
+  }).filter(r => {
+    // Sembunyikan hanya jika stok = 0 DAN tidak pernah terjual sama sekali
+    if(r.stok <= 0 && !r.pernahTerjual) return false;
+    return true;
+  });
+
+  // Metrics
+  const habisN = stokWithStatus.filter(r=>r.status==='habis').length;
+  const kritisN = stokWithStatus.filter(r=>r.status==='kritis').length;
+  const menipisN = stokWithStatus.filter(r=>r.status==='menipis').length;
+  const amanN = stokWithStatus.filter(r=>r.status==='aman').length;
+  const totalStok = stokWithStatus.reduce((s,r)=>s+r.stok,0);
+
+  document.getElementById('stok-metrics').innerHTML = `
+    <div class="mc" style="--ac:var(--red)"><div class="lbl">🔴 Habis (0 stok)</div><div class="val" style="color:var(--red)">${habisN}</div><div class="sub">SKU perlu restock SEGERA</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">🟠 Kritis (≤3 hari)</div><div class="val" style="color:var(--accent3)">${kritisN}</div><div class="sub">Stok habis dalam 3 hari</div></div>
+    <div class="mc" style="--ac:var(--yellow)"><div class="lbl">🟡 Menipis (≤7 hari)</div><div class="val" style="color:var(--yellow)">${menipisN}</div><div class="sub">Stok habis dalam 7 hari</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">🟢 Aman</div><div class="val" style="color:var(--accent2)">${amanN}</div><div class="sub">Stok cukup >7 hari</div></div>
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">Total SKU</div><div class="val">${stokWithStatus.length}</div><div class="sub">SKU aktif ditampilkan</div></div>
+    <div class="mc" style="--ac:var(--accent4)"><div class="lbl">Total Unit Stok</div><div class="val">${totalStok}</div><div class="sub">Semua SKU digabung</div></div>
+  `;
+
+  // RESTOCK TABLE — prioritas habis dan kritis dulu
+  const needRestock = stokWithStatus
+    .filter(r=>r.status==='habis'||r.status==='kritis'||r.status==='menipis')
+    .sort((a,b)=>a.daysLeft-b.daysLeft);
+
+  document.getElementById('restock-count').textContent = '(' + needRestock.length + ' SKU)';
+  document.getElementById('restock-tbody').innerHTML = needRestock.map(r=>{
+    const statusMap = {habis:'br',kritis:'bo',menipis:'by'};
+    const statusLabel = {habis:'HABIS',kritis:'KRITIS',menipis:'MENIPIS'};
+    const velStr = r.vel>0 ? r.vel.toFixed(2)+'/hari' : '—';
+    const daysStr = r.stok<=0 ? '—' : r.daysLeft>=999 ? '—' : r.daysLeft+' hari lagi';
+    const daysClass = r.status==='habis'?'habis':r.status;
+    return `<tr>
+      <td style="font-weight:500">${r.NAMA_PRODUK||'—'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">${r.SKU||'—'}</td>
+      <td style="text-align:center"><span class="badge bw">${r.UKURAN||'—'}</span></td>
+      <td style="font-weight:700;color:${r.stok<=0?'var(--red)':r.status==='kritis'?'var(--accent3)':'var(--yellow)'}">${r.stok}</td>
+      <td style="color:var(--muted);font-size:11px">${velStr}</td>
+      <td><span class="days-badge ${daysClass}">${daysStr}</span></td>
+      <td><span class="badge ${statusMap[r.status]||'bw'}">${statusLabel[r.status]||r.status}</span></td>
+      <td style="color:var(--accent2);font-weight:600">+${r.restockQty} unit</td>
+    </tr>`;
+  }).join('');
+
+  // Simpan untuk filter
+  window._stokWithStatus = stokWithStatus;
+  renderStokCards();
+  renderStokCharts(stokWithStatus);
+}
+
+function filterStok(filter, btn) {
+  stokFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStokCards();
+}
+
+function renderStokCards() {
+  const stokData = window._stokWithStatus || [];
+  const q = (document.getElementById('stok-search')?.value||'').toLowerCase();
+
+  let filtered = stokData;
+  if(stokFilter !== 'semua') filtered = filtered.filter(r=>r.status===stokFilter);
+  if(q) filtered = filtered.filter(r=>(r.NAMA_PRODUK||'').toLowerCase().includes(q)||(r.SKU||'').toLowerCase().includes(q));
+
+  // Sort: habis dulu, lalu kritis, menipis, aman
+  const order = {habis:0,kritis:1,menipis:2,aman:3};
+  filtered.sort((a,b)=>(order[a.status]||0)-(order[b.status]||0)||a.daysLeft-b.daysLeft);
+
+  document.getElementById('stok-count-label').textContent = filtered.length + ' item';
+
+  const maxStok = Math.max(1, ...filtered.map(r=>r.stok));
+  const colorMap = {aman:'var(--accent2)',menipis:'var(--yellow)',kritis:'var(--accent3)',habis:'var(--red)'};
+
+  document.getElementById('stok-grid').innerHTML = filtered.map(r => {
+    const velStr = r.vel>0 ? r.vel.toFixed(2)+' terjual/hari' : 'Belum ada data jual';
+    const daysStr = r.stok<=0 ? 'HABIS' : r.daysLeft>=999 ? 'Stok aman' : 'Habis ~'+r.daysLeft+' hari lagi';
+    const barPct = r.stok<=0 ? 0 : Math.min(100, (r.stok/Math.max(maxStok,10))*100);
+    return `<div class="stok-card ${r.status}">
+      <div class="stok-nama">${r.NAMA_PRODUK||'—'}</div>
+      <div class="stok-sku">${r.SKU||'—'} · Size ${r.UKURAN||'—'}</div>
+      <div class="stok-info">
+        <div>
+          <div class="stok-angka ${r.status}">${r.stok}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">unit tersisa</div>
+        </div>
+        <div style="text-align:right">
+          <div><span class="status-pill ${r.status}"><span class="dot ${r.status}"></span>${r.status.toUpperCase()}</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">${velStr}</div>
+          <div style="font-size:10px;margin-top:2px;color:${colorMap[r.status]}">${daysStr}</div>
+          ${r.status!=='aman'?`<div style="font-size:10px;color:var(--accent2);margin-top:2px">Restock: +${r.restockQty} unit</div>`:''}
+        </div>
+      </div>
+      <div class="stok-bar-wrap">
+        <div class="stok-bar-bg"><div class="stok-bar-fill" style="width:${barPct}%;background:${colorMap[r.status]}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStokCharts(stokData) {
+  // Stok per produk (gabung semua ukuran)
+  const prodStok = {};
+  stokData.forEach(r=>{
+    const p=r.NAMA_PRODUK||'Unknown';
+    prodStok[p]=(prodStok[p]||0)+r.stok;
+  });
+  const sortedProd = Object.entries(prodStok).sort((a,b)=>a[1]-b[1]).slice(0,15);
+
+  destroyChart('c-stok-produk');
+  charts['c-stok-produk'] = new Chart(document.getElementById('c-stok-produk'),{
+    type:'bar',
+    data:{labels:sortedProd.map(e=>e[0].length>35?e[0].substring(0,35)+'...':e[0]),datasets:[{
+      data:sortedProd.map(e=>e[1]),
+      backgroundColor:sortedProd.map(e=>e[1]<=0?'#f95f5f':e[1]<=5?'#f97c4f':e[1]<=10?'#f9d74f':'#38e8b5'),
+      borderRadius:4
+    }]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:TX,grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}
+  });
+
+  // Velocity chart
+  const velProd = calcProductVelocity();
+  const sortedVel = Object.entries(velProd).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  destroyChart('c-velocity');
+  charts['c-velocity'] = new Chart(document.getElementById('c-velocity'),{
+    type:'bar',
+    data:{labels:sortedVel.map(e=>e[0].length>30?e[0].substring(0,30)+'...':e[0]),datasets:[{
+      data:sortedVel.map(e=>parseFloat(e[1].toFixed(2))),
+      backgroundColor:'#c97cf9',borderRadius:4
+    }]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{...TX,callback:v=>v+'/hari'},grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}
+  });
+}
+
+// ============================================================
+// TREND
+// ============================================================
+function renderTrend() {
+  const d = allData;
+  const dateCount = count(d,'TANGGAL');
+  const dateRevenue = sumBy(d,'TANGGAL','HARGA');
+  const sortedDates = Object.keys(dateCount).sort();
+  const monthCount = {};
+  d.forEach(r=>{if(!r.TANGGAL)return;const m=r.TANGGAL.toString().substring(0,7);monthCount[m]=(monthCount[m]||0)+1;});
+  const topMonth = Object.entries(monthCount).sort((a,b)=>b[1]-a[1])[0];
+  const maxDay = Object.entries(dateCount).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('trend-metrics').innerHTML = `
+    <div class="mc" style="--ac:var(--accent)"><div class="lbl">Total Pesanan</div><div class="val">${d.length}</div><div class="sub">Semua periode</div></div>
+    <div class="mc" style="--ac:var(--accent2)"><div class="lbl">Bulan Terbanyak</div><div class="val">${topMonth?topMonth[0]:'—'}</div><div class="sub">${topMonth?topMonth[1]+' pesanan':'—'}</div></div>
+    <div class="mc" style="--ac:var(--accent3)"><div class="lbl">Hari Tersibuk</div><div class="val">${maxDay?maxDay[0]:'—'}</div><div class="sub">${maxDay?maxDay[1]+' pesanan':'—'}</div></div>
+    <div class="mc" style="--ac:var(--accent4)"><div class="lbl">Avg/Hari Aktif</div><div class="val">${sortedDates.length?(d.length/sortedDates.length).toFixed(1):'—'}</div><div class="sub">Per hari ada transaksi</div></div>
+  `;
+
+  destroyChart('c-trend2');
+  charts['c-trend2'] = new Chart(document.getElementById('c-trend2'),{type:'bar',data:{labels:sortedDates,datasets:[{data:sortedDates.map(d=>dateCount[d]),backgroundColor:'#4f9cf9',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+
+  destroyChart('c-trend-rev');
+  charts['c-trend-rev'] = new Chart(document.getElementById('c-trend-rev'),{type:'line',data:{labels:sortedDates,datasets:[{data:sortedDates.map(d=>dateRevenue[d]||0),borderColor:'#38e8b5',backgroundColor:'rgba(56,232,181,0.1)',tension:.4,fill:true,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{...TX,font:{size:10},maxRotation:60,autoSkip:true,maxTicksLimit:20},grid:GR},y:{beginAtZero:true,ticks:{...TX,callback:v=>fmtShort(v)},grid:GR}}}});
+}
+
+// ============================================================
+// PRODUK
+// ============================================================
+function renderProduk() {
+  const d = allData;
+  const prodMap = {};
+  d.forEach(r=>{
+    const p=r.PRODUK||'Unknown';
+    if(!prodMap[p]) prodMap[p]={qty:0,revenue:0,returned:0};
+    prodMap[p].qty+=parseInt(r.QTY)||1;
+    prodMap[p].revenue+=parseFloat(r.HARGA)||0;
+    if(r.STATUS==='RETURNED') prodMap[p].returned++;
+  });
+
+  // Gabungkan stok per produk
+  const prodStokMap = {};
+  allStok.forEach(r=>{
+    const p=r.NAMA_PRODUK||'';
+    prodStokMap[p]=(prodStokMap[p]||0)+parseInt(r.STOK||0);
+  });
+
+  const sorted = Object.entries(prodMap).sort((a,b)=>b[1].qty-a[1].qty);
+  const top15 = sorted.slice(0,15);
+
+  destroyChart('c-produk');
+  charts['c-produk'] = new Chart(document.getElementById('c-produk'),{type:'bar',data:{labels:top15.map(e=>e[0].length>30?e[0].substring(0,30)+'...':e[0]),datasets:[{data:top15.map(e=>e[1].qty),backgroundColor:top15.map((_,i)=>COLORS[i%COLORS.length]),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:TX,grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}});
+
+  document.getElementById('produk-tbody').innerHTML = sorted.slice(0,30).map(([name,d],i)=>{
+    const stokTersisa = prodStokMap[name];
+    const stokStr = stokTersisa!=null ? `<span style="font-weight:600;color:${stokTersisa<=0?'var(--red)':stokTersisa<=5?'var(--yellow)':'var(--accent2)'}">${stokTersisa}</span>` : '<span style="color:var(--muted)">—</span>';
+    return `<tr>
+      <td style="color:var(--muted);font-family:'Space Mono',monospace">#${i+1}</td>
+      <td style="font-weight:500">${name}</td>
+      <td style="color:var(--accent2);font-weight:600">${d.qty}x</td>
+      <td>${fmtShort(d.revenue)}</td>
+      <td>${d.qty?fmtShort(d.revenue/d.qty):'—'}</td>
+      <td>${d.returned>0?`<span class="badge br">${d.returned}x</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${stokStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// KOTA
+// ============================================================
+function renderKota() {
+  const d = allData;
+  const kotaCount = count(d,'KOTA');
+  const provCount = count(d,'PROVINSI');
+  const sortedKota = Object.entries(kotaCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxKota = sortedKota[0]?sortedKota[0][1]:1;
+
+  document.getElementById('kota-bars').innerHTML = sortedKota.map(([kota,n],i)=>`
+    <div class="bwrap">
+      <div class="blabel"><span>${kota}</span><span style="color:${COLORS[i%COLORS.length]};font-weight:600">${n}</span></div>
+      <div class="btrack"><div class="bfill" style="width:${(n/maxKota*100).toFixed(0)}%;background:${COLORS[i%COLORS.length]}"></div></div>
+    </div>`).join('');
+
+  const provEntries = Object.entries(provCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  document.getElementById('lgnd-prov').innerHTML = provEntries.map((e,i)=>`<span><span class="ld" style="background:${COLORS[i]}"></span>${e[0]} ${e[1]}</span>`).join('');
+  destroyChart('c-prov');
+  charts['c-prov'] = new Chart(document.getElementById('c-prov'),{type:'doughnut',data:{labels:provEntries.map(e=>e[0]),datasets:[{data:provEntries.map(e=>e[1]),backgroundColor:COLORS,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
+
+  const top5Kota = sortedKota.slice(0,5).map(e=>e[0]);
+  const platforms = [...new Set(d.map(r=>r.PLATFORM).filter(Boolean))];
+  const datasets = platforms.map((plat,i)=>({label:plat,data:top5Kota.map(kota=>d.filter(r=>r.KOTA===kota&&r.PLATFORM===plat).length),backgroundColor:COLORS[i]||'#7a8099',borderRadius:3}));
+  destroyChart('c-kota-plat');
+  charts['c-kota-plat'] = new Chart(document.getElementById('c-kota-plat'),{type:'bar',data:{labels:top5Kota,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7a8099',font:{size:10},padding:8}}},scales:{x:{stacked:true,ticks:TX,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:TX,grid:GR}}}});
+}
+
+// ============================================================
+// STATUS
+// ============================================================
+function renderStatus() {
+  const d = allData;
+  const statusColors={'COMPLETED':'#38e8b5','SHIPPED':'#4f9cf9','PROCESSING':'#f9d74f','RETURNED':'#f95f5f'};
+  const statusCount = count(d,'STATUS');
+
+  document.getElementById('status-metrics').innerHTML = Object.entries(statusColors).map(([s,c])=>{
+    const n=statusCount[s]||0;
+    const pct=d.length?(n/d.length*100).toFixed(1):0;
+    return `<div class="mc" style="--ac:${c}"><div class="lbl">${s}</div><div class="val">${n}</div><div class="sub">${pct}% dari total</div></div>`;
+  }).join('');
+
+  const statusEntries = Object.entries(statusCount).sort((a,b)=>b[1]-a[1]);
+  destroyChart('c-status2');
+  charts['c-status2'] = new Chart(document.getElementById('c-status2'),{type:'bar',data:{labels:statusEntries.map(e=>e[0]),datasets:[{data:statusEntries.map(e=>e[1]),backgroundColor:statusEntries.map(e=>statusColors[e[0]]||'#7a8099'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:TX,grid:{display:false}},y:{beginAtZero:true,ticks:TX,grid:GR}}}});
+
+  const returns = d.filter(r=>r.STATUS==='RETURNED');
+  document.getElementById('return-list').innerHTML = returns.length?returns.map(r=>`
+    <div style="background:rgba(249,95,95,.08);border:1px solid rgba(249,95,95,.2);border-radius:8px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-size:10px;color:var(--red);font-family:'Space Mono',monospace;margin-bottom:3px">${r.TANGGAL_DISPLAY||r.TANGGAL||'—'} · ${r.PLATFORM||'—'}</div>
+      <div style="font-size:12px">${r.PELANGGAN||'—'} · ${r.PRODUK||'—'}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${fmt(r.HARGA||0)} · ${r.KURIR||'—'}</div>
+    </div>`).join(''):'<div style="color:var(--muted);font-size:12px;padding:12px">Tidak ada return 🎉</div>';
+
+  const kurirCount = count(d,'KURIR');
+  const sortedKurir = Object.entries(kurirCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  destroyChart('c-kurir');
+  charts['c-kurir'] = new Chart(document.getElementById('c-kurir'),{type:'bar',data:{labels:sortedKurir.map(e=>e[0]),datasets:[{data:sortedKurir.map(e=>e[1]),backgroundColor:'#f9d74f',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:TX,grid:GR},y:{ticks:{...TX,font:{size:11}},grid:{display:false}}}}});
+}
+
+// ============================================================
+// TABEL
+// ============================================================
+let filteredData = [];
+function renderTabel() { filteredData=[...allData]; renderTabelRows(); }
+function filterTable() {
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const plat=document.getElementById('filter-platform').value;
+  const stat=document.getElementById('filter-status').value;
+  filteredData=allData.filter(r=>{
+    const matchQ=!q||[r.PELANGGAN,r.PRODUK,r.KOTA,r.NO_PESANAN].some(v=>(v||'').toLowerCase().includes(q));
+    const matchP=!plat||(r.PLATFORM||'').toUpperCase().includes(plat);
+    const matchS=!stat||(r.STATUS||'').toUpperCase()===stat;
+    return matchQ&&matchP&&matchS;
+  });
+  renderTabelRows();
+}
+function renderTabelRows() {
+  const statusColors={'COMPLETED':'bg','SHIPPED':'bb','PROCESSING':'by','RETURNED':'br'};
+  const platColors={'SHOPEE':'bo','TOKOPEDIA':'bg','TIKTOK':'bp'};
+  document.getElementById('tabel-count').textContent=`Menampilkan ${filteredData.length} dari ${allData.length} data`;
+  document.getElementById('tabel-tbody').innerHTML=filteredData.slice(0,200).map(r=>`
+    <tr>
+      <td style="white-space:nowrap">${r.TANGGAL_DISPLAY||r.TANGGAL||'—'}</td>
+      <td><span class="badge ${platColors[(r.PLATFORM||'').toUpperCase()]||'bw'}">${r.PLATFORM||'—'}</span></td>
+      <td>${r.PELANGGAN||'—'}</td>
+      <td style="font-size:11px">${r.PRODUK||'—'}</td>
+      <td style="text-align:center">${r.UKURAN||'—'}</td>
+      <td style="white-space:nowrap">${fmt(r.HARGA||0)}</td>
+      <td><span class="badge ${statusColors[(r.STATUS||'').toUpperCase()]||'bw'}">${r.STATUS||'—'}</span></td>
+      <td>${r.KOTA||'—'}</td>
+      <td style="font-size:11px">${r.KURIR||'—'}</td>
+    </tr>`).join('');
+}
+
+// ============================================================
+// TAB + INIT
+// ============================================================
+function sw(name,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+}
+if(SHEET_URL) document.getElementById('sheet-url').value=SHEET_URL;
+loadData();
+setInterval(()=>{if(SHEET_URL)loadData();},5*60*1000);
+</script>
+</body>
+</html>
