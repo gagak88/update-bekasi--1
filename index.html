@@ -635,8 +635,8 @@ function renderAll() {
   renderStatus();
   renderTabel();
   renderInstan();
-  document.getElementById('total-badge').textContent = allData.length + ' PESANAN · ' + (window._stokWithStatus ? window._stokWithStatus.length : allStok.length) + ' SKU';
-  document.getElementById('footer-text').textContent = 'Portee Goods · Gudang Peep Bekasi · Update: ' + new Date().toLocaleString('id-ID');
+  (document.getElementById('total-badge')||{}).textContent = allData.length + ' PESANAN · ' + (window._stokWithStatus ? window._stokWithStatus.length : allStok.length) + ' SKU';
+  (document.getElementById('footer-text')||{}).textContent = 'Portee Goods · Gudang Peep Bekasi · Update: ' + new Date().toLocaleString('id-ID');
 }
 
 // ============================================================
@@ -662,14 +662,14 @@ function renderOverview() {
     return getStatus(stok,vel)==='kritis';
   }).length;
 
-  document.getElementById('s-total').textContent = total;
-  document.getElementById('s-daterange').textContent = dateRange;
-  document.getElementById('s-revenue').textContent = fmtShort(revenue);
-  document.getElementById('s-avg').textContent = total?fmtShort(revenue/total):'—';
-  document.getElementById('s-platform').textContent = topPlat?topPlat[0]:'—';
-  document.getElementById('s-platform-sub').textContent = topPlat?topPlat[1]+' pesanan':'—';
-  document.getElementById('s-kritis').textContent = kritisCount;
-  document.getElementById('s-habis').textContent = habisCount;
+  (document.getElementById('s-total')||{}).textContent = total;
+  (document.getElementById('s-daterange')||{}).textContent = dateRange;
+  (document.getElementById('s-revenue')||{}).textContent = fmtShort(revenue);
+  (document.getElementById('s-avg')||{}).textContent = total?fmtShort(revenue/total):'—';
+  (document.getElementById('s-platform')||{}).textContent = topPlat?topPlat[0]:'—';
+  (document.getElementById('s-platform-sub')||{}).textContent = topPlat?topPlat[1]+' pesanan':'—';
+  (document.getElementById('s-kritis')||{}).textContent = kritisCount;
+  (document.getElementById('s-habis')||{}).textContent = habisCount;
 
   // Alert jika ada stok kritis/habis
   const alertEl = document.getElementById('stok-alert-ov');
@@ -776,7 +776,7 @@ function renderStok() {
     .filter(r=>r.status==='habis'||r.status==='kritis'||r.status==='menipis')
     .sort((a,b)=>a.daysLeft-b.daysLeft);
 
-  document.getElementById('restock-count').textContent = '(' + needRestock.length + ' SKU)';
+  (document.getElementById('restock-count')||{}).textContent = '(' + needRestock.length + ' SKU)';
   document.getElementById('restock-tbody').innerHTML = needRestock.map(r=>{
     const statusMap = {habis:'br',kritis:'bo',menipis:'by'};
     const statusLabel = {habis:'HABIS',kritis:'KRITIS',menipis:'MENIPIS'};
@@ -820,7 +820,7 @@ function renderStokCards() {
   const order = {habis:0,kritis:1,menipis:2,aman:3};
   filtered.sort((a,b)=>(order[a.status]||0)-(order[b.status]||0)||a.daysLeft-b.daysLeft);
 
-  document.getElementById('stok-count-label').textContent = filtered.length + ' item';
+  (document.getElementById('stok-count-label')||{}).textContent = filtered.length + ' item';
 
   const maxStok = Math.max(1, ...filtered.map(r=>r.stok));
   const colorMap = {aman:'var(--accent2)',menipis:'var(--yellow)',kritis:'var(--accent3)',habis:'var(--red)'};
@@ -1036,7 +1036,7 @@ function filterTable() {
 function renderTabelRows() {
   const statusColors={'COMPLETED':'bg','SHIPPED':'bb','PROCESSING':'by','RETURNED':'br'};
   const platColors={'SHOPEE':'bo','TOKOPEDIA':'bg','TIKTOK':'bp'};
-  document.getElementById('tabel-count').textContent=`Menampilkan ${filteredData.length} dari ${allData.length} data`;
+  (document.getElementById('tabel-count')||{}).textContent=`Menampilkan ${filteredData.length} dari ${allData.length} data`;
   document.getElementById('tabel-tbody').innerHTML=filteredData.slice(0,200).map(r=>`
     <tr>
       <td style="white-space:nowrap">${r.TANGGAL_DISPLAY||r.TANGGAL||'—'}</td>
